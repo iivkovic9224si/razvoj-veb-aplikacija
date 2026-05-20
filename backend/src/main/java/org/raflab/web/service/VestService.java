@@ -50,4 +50,12 @@ public class VestService {
 
         return res;
     }
+
+    public void likeVest(int id) {
+        vestRepository.incrementLikes(id);
+    }
+
+    public void dislikeVest(int id) {
+        vestRepository.incrementDislikes(id);
+    }
 }

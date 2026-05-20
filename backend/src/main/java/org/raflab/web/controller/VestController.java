@@ -32,5 +32,17 @@ public class VestController {
             res.status(201);
             return gson.toJson("Vest uspesno kreirana");
         });
+
+        post("/api/vesti/:id/like", (req, res) -> {
+            int id = Integer.parseInt(req.params(":id"));
+            vestService.likeVest(id);
+            return gson.toJson("Vest uspesno lajkovana");
+        });
+
+        post("/api/vesti/:id/dislike", (req, res) -> {
+            int id = Integer.parseInt(req.params(":id"));
+            vestService.dislikeVest(id);
+            return gson.toJson("Vest uspesno dislajkovana");
+        });
     }
 }
