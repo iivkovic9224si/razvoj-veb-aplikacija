@@ -51,4 +51,22 @@ public class KomentarRepository {
             st.executeUpdate();
         } catch (SQLException e) { e.printStackTrace(); }
     }
+
+    public void incrementLikes(int id) {
+        String upit = "UPDATE komentari SET broj_lajkova = broj_lajkova + 1 WHERE id = ?";
+        try (Connection con = DatabaseConnection.getConnection();
+             PreparedStatement st = con.prepareStatement(upit)) {
+            st.setInt(1, id);
+            st.executeUpdate();
+        } catch (SQLException e) { e.printStackTrace(); }
+    }
+
+    public void incrementDislikes(int id) {
+        String upit = "UPDATE komentari SET broj_dislajkova = broj_dislajkova + 1 WHERE id = ?";
+        try (Connection con = DatabaseConnection.getConnection();
+             PreparedStatement st = con.prepareStatement(upit)) {
+            st.setInt(1, id);
+            st.executeUpdate();
+        } catch (SQLException e) { e.printStackTrace(); }
+    }
 }

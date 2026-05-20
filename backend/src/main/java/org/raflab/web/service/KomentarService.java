@@ -29,4 +29,12 @@ public class KomentarService {
         Komentar k = new Komentar(0, req.getAutor(), req.getTekst(), null, 0, 0, req.getVestId());
         komentarRepository.create(k);
     }
+
+    public void likeComment(int id) {
+        komentarRepository.incrementLikes(id);
+    }
+
+    public void dislikeComment(int id) {
+        komentarRepository.incrementDislikes(id);
+    }
 }

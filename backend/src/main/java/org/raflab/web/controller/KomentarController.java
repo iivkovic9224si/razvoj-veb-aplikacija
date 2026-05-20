@@ -22,5 +22,17 @@ public class KomentarController {
             res.status(201);
             return gson.toJson("Komentar dodat");
         });
+
+        post("/api/komentari/:id/like", (req, res) -> {
+            int id = Integer.parseInt(req.params(":id"));
+            komentarService.likeComment(id);
+            return gson.toJson("Komentar uspesno lajkovan");
+        });
+
+        post("/api/komentari/:id/dislike", (req, res) -> {
+            int id = Integer.parseInt(req.params(":id"));
+            komentarService.dislikeComment(id);
+            return gson.toJson("Komentar uspesno dislajkovan");
+        });
     }
 }
