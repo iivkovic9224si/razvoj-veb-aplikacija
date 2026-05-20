@@ -50,5 +50,4 @@ public class KategorijaRepository {
             st.executeUpdate();
         } catch (SQLException e) { e.printStackTrace(); }
     }
-
 }

@@ -12,7 +12,7 @@ public class Korisnik {
     private String email;
     private String ime;
     private String prezime;
-    private String tip; // "admin" ili "autor"
-    private int status; // 1 za aktivan, 0 za neaktivan
+    private String tip;    // U bazi: 'ADMINISTRATOR' ili 'STVARALAC_SADRZAJA'
+    private String status; // U bazi: 'AKTIVAN' ili 'NEAKTIVAN'
     private String lozinka;
 }
