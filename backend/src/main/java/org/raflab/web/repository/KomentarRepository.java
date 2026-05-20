@@ -1,16 +1,17 @@
 package org.raflab.web.repository;
 
+import org.raflab.web.DatabaseConnection;
 import org.raflab.web.model.Komentar;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 
 public class KomentarRepository {
-    /*
+
     public List<Komentar> findByVest(int vestId) {
         List<Komentar> komentari = new ArrayList<>();
         String upit = "SELECT * FROM komentari WHERE vest_id = ? ORDER BY vreme_kreiranja DESC";
-        try (Connection con = Database.getConnection();
+        try (Connection con = DatabaseConnection.getConnection();
              PreparedStatement st = con.prepareStatement(upit)) {
             st.setInt(1, vestId);
             try (ResultSet rs = st.executeQuery()) {
@@ -25,7 +26,7 @@ public class KomentarRepository {
 
     public void create(Komentar k) {
         String upit = "INSERT INTO komentari (autor, tekst, vest_id, vreme_kreiranja) VALUES (?, ?, ?, NOW())";
-        try (Connection con = Database.getConnection();
+        try (Connection con = DatabaseConnection.getConnection();
              PreparedStatement st = con.prepareStatement(upit)) {
             st.setString(1, k.getAutor());
             st.setString(2, k.getTekst());
@@ -33,5 +34,5 @@ public class KomentarRepository {
             st.executeUpdate();
         } catch (SQLException e) { e.printStackTrace(); }
     }
-    */
+
 }

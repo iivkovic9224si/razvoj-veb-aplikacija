@@ -1,18 +1,19 @@
 package org.raflab.web.repository;
 
+import org.raflab.web.DatabaseConnection;
 import org.raflab.web.model.Tag;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 
 public class TagRepository {
-    /*
+
     public List<Tag> getTagsForVest(int vestId) {
         List<Tag> tagovi = new ArrayList<>();
         String upit = "SELECT t.id, t.rec FROM tagovi t " +
                      "JOIN vest_tag vt ON t.id = vt.tag_id " +
                      "WHERE vt.vest_id = ?";
-        try (Connection con = Database.getConnection();
+        try (Connection con = DatabaseConnection.getConnection();
              PreparedStatement st = con.prepareStatement(upit)) {
             st.setInt(1, vestId);
             try (ResultSet rs = st.executeQuery()) {
@@ -27,7 +28,7 @@ public class TagRepository {
     public int getOrInsertTag(String rec) {
         // Prvo pokušaj da nađeš tag
         String selectUpit = "SELECT id FROM tagovi WHERE rec = ?";
-        try (Connection con = Database.getConnection();
+        try (Connection con = DatabaseConnection.getConnection();
              PreparedStatement st = con.prepareStatement(selectUpit)) {
             st.setString(1, rec);
             try (ResultSet rs = st.executeQuery()) {
@@ -49,12 +50,12 @@ public class TagRepository {
 
     public void linkTagToVest(int vestId, int tagId) {
         String upit = "INSERT IGNORE INTO vest_tag (vest_id, tag_id) VALUES (?, ?)";
-        try (Connection con = Database.getConnection();
+        try (Connection con = DatabaseConnection.getConnection();
              PreparedStatement st = con.prepareStatement(upit)) {
             st.setInt(1, vestId);
             st.setInt(2, tagId);
             st.executeUpdate();
         } catch (SQLException e) { e.printStackTrace(); }
     }
-    */
+
 }

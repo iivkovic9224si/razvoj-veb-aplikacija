@@ -1,16 +1,17 @@
 package org.raflab.web.repository;
 
+import org.raflab.web.DatabaseConnection;
 import org.raflab.web.model.Kategorija;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 
 public class KategorijaRepository {
-    /*
+
     public List<Kategorija> findAll() {
         List<Kategorija> kategorije = new ArrayList<>();
         String upit = "SELECT * FROM kategorije";
-        try (Connection con = Database.getConnection();
+        try (Connection con = DatabaseConnection.getConnection();
              Statement st = con.createStatement();
              ResultSet rs = st.executeQuery(upit)) {
             while (rs.next()) {
@@ -22,7 +23,7 @@ public class KategorijaRepository {
 
     public void create(Kategorija k) {
         String upit = "INSERT INTO kategorije (ime, opis) VALUES (?, ?)";
-        try (Connection con = Database.getConnection();
+        try (Connection con = DatabaseConnection.getConnection();
              PreparedStatement st = con.prepareStatement(upit)) {
             st.setString(1, k.getIme());
             st.setString(2, k.getOpis());
@@ -32,7 +33,7 @@ public class KategorijaRepository {
 
     public void update(Kategorija k) {
         String upit = "UPDATE kategorije SET ime = ?, opis = ? WHERE id = ?";
-        try (Connection con = Database.getConnection();
+        try (Connection con = DatabaseConnection.getConnection();
              PreparedStatement st = con.prepareStatement(upit)) {
             st.setString(1, k.getIme());
             st.setString(2, k.getOpis());
@@ -43,11 +44,11 @@ public class KategorijaRepository {
 
     public void delete(int id) {
         String upit = "DELETE FROM kategorije WHERE id = ?";
-        try (Connection con = Database.getConnection();
+        try (Connection con = DatabaseConnection.getConnection();
              PreparedStatement st = con.prepareStatement(upit)) {
             st.setInt(1, id);
             st.executeUpdate();
         } catch (SQLException e) { e.printStackTrace(); }
     }
-    */
+
 }

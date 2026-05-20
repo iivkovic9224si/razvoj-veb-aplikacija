@@ -1,17 +1,17 @@
 package org.raflab.web.repository;
 
+import org.raflab.web.DatabaseConnection;
 import org.raflab.web.model.Korisnik;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 
 public class KorisnikRepository {
-
-    // Metoda za login - traži korisnika po emailu i lozinki
-    /*public Korisnik findKorisnik(String email, String lozinka) {
+    
+    public Korisnik findKorisnik(String email, String lozinka) {
         String upit = "SELECT * FROM korisnici WHERE email = ? AND lozinka = ? AND status = 1";
 
-        try (Connection con = Database.getConnection();
+        try (Connection con = DatabaseConnection.getConnection();
              PreparedStatement st = con.prepareStatement(upit)) {
 
             st.setString(1, email);
@@ -33,7 +33,7 @@ public class KorisnikRepository {
         } catch (SQLException e) {
             e.printStackTrace();
         }
-        return null; // Ako korisnik ne postoji ili je lozinka pogrešna
+        return null;
     }
-     */
+     
 }
