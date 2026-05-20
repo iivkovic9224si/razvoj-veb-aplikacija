@@ -1,0 +1,26 @@
+package org.raflab.web.service;
+
+import org.raflab.web.dto.request.KomentarRequest;
+import org.raflab.web.dto.response.KomentarResponse;
+import org.raflab.web.model.Komentar;
+import org.raflab.web.repository.KomentarRepository;
+import java.util.List;
+import java.util.stream.Collectors;
+
+public class KomentarService {
+    private final KomentarRepository komentarRepository = new KomentarRepository();
+
+    public List<KomentarResponse> getByVest(int vestId, int page) {
+        int limit = 10;
+        int offset = (page - 1) * limit;
+        return komentarRepository.findByVestPaginated(vestId, offset, limit).stream()
+                .map(k -> new KomentarResponse(k.getId(), k.getAutor(), k.getTekst(),
+                        k.getVremeKreiranja(), k.getBrojLajkova(), k.getBrojDislajkova()))
+                .collect(Collectors.toList());
+    }
+
+    public void addComment(KomentarRequest req) {
+        Komentar k = new Komentar(0, req.getAutor(), req.getTekst(), null, 0, 0, req.getVestId());
+        komentarRepository.create(k);
+    }
+}

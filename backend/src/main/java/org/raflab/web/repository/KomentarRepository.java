@@ -8,22 +8,20 @@ import java.util.List;
 
 public class KomentarRepository {
 
-    public List<Komentar> findByVest(int vestId) {
+    public List<Komentar> findByVestPaginated(int vestId, int offset, int limit) {
         List<Komentar> komentari = new ArrayList<>();
-        String upit = "SELECT * FROM komentari WHERE vest_id = ? ORDER BY vreme_kreiranja DESC";
+        String upit = "SELECT * FROM komentari WHERE vest_id = ? ORDER BY vreme_kreiranja DESC LIMIT ? OFFSET ?";
         try (Connection con = DatabaseConnection.getConnection();
              PreparedStatement st = con.prepareStatement(upit)) {
             st.setInt(1, vestId);
+            st.setInt(2, limit);
+            st.setInt(3, offset);
             try (ResultSet rs = st.executeQuery()) {
                 while (rs.next()) {
                     komentari.add(new Komentar(
-                            rs.getInt("id"),
-                            rs.getString("autor"),
-                            rs.getString("tekst"),
-                            rs.getTimestamp("vreme_kreiranja"),
-                            rs.getInt("broj_lajkova"),    // Novo polje
-                            rs.getInt("broj_dislajkova"), // Novo polje
-                            rs.getInt("vest_id")
+                            rs.getInt("id"), rs.getString("autor"), rs.getString("tekst"),
+                            rs.getTimestamp("vreme_kreiranja"), rs.getInt("broj_lajkova"),
+                            rs.getInt("broj_dislajkova"), rs.getInt("vest_id")
                     ));
                 }
             }
@@ -31,8 +29,19 @@ public class KomentarRepository {
         return komentari;
     }
 
+    public int countByVest(int vestId) {
+        String upit = "SELECT COUNT(*) FROM komentari WHERE vest_id = ?";
+        try (Connection con = DatabaseConnection.getConnection();
+             PreparedStatement st = con.prepareStatement(upit)) {
+            st.setInt(1, vestId);
+            try (ResultSet rs = st.executeQuery()) {
+                if (rs.next()) return rs.getInt(1);
+            }
+        } catch (SQLException e) { e.printStackTrace(); }
+        return 0;
+    }
+
     public void create(Komentar k) {
-        // Podrazumevani lajkovi su 0 (baza to sama rešava preko DEFAULT 0)
         String upit = "INSERT INTO komentari (autor, tekst, vest_id, vreme_kreiranja) VALUES (?, ?, ?, NOW())";
         try (Connection con = DatabaseConnection.getConnection();
              PreparedStatement st = con.prepareStatement(upit)) {
