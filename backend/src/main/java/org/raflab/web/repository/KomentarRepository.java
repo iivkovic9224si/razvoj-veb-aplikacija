@@ -16,8 +16,15 @@ public class KomentarRepository {
             st.setInt(1, vestId);
             try (ResultSet rs = st.executeQuery()) {
                 while (rs.next()) {
-                    komentari.add(new Komentar(rs.getInt("id"), rs.getString("autor"),
-                                  rs.getString("tekst"), rs.getTimestamp("vreme_kreiranja"), rs.getInt("vest_id")));
+                    komentari.add(new Komentar(
+                            rs.getInt("id"),
+                            rs.getString("autor"),
+                            rs.getString("tekst"),
+                            rs.getTimestamp("vreme_kreiranja"),
+                            rs.getInt("broj_lajkova"),    // Novo polje
+                            rs.getInt("broj_dislajkova"), // Novo polje
+                            rs.getInt("vest_id")
+                    ));
                 }
             }
         } catch (SQLException e) { e.printStackTrace(); }
@@ -25,6 +32,7 @@ public class KomentarRepository {
     }
 
     public void create(Komentar k) {
+        // Podrazumevani lajkovi su 0 (baza to sama rešava preko DEFAULT 0)
         String upit = "INSERT INTO komentari (autor, tekst, vest_id, vreme_kreiranja) VALUES (?, ?, ?, NOW())";
         try (Connection con = DatabaseConnection.getConnection();
              PreparedStatement st = con.prepareStatement(upit)) {
@@ -34,5 +42,4 @@ public class KomentarRepository {
             st.executeUpdate();
         } catch (SQLException e) { e.printStackTrace(); }
     }
-
 }

@@ -10,8 +10,10 @@ import java.util.Date;
 @AllArgsConstructor
 public class Komentar {
     private int id;
-    private String autor; // Ime osobe koja ostavlja komentar
+    private String autor;
     private String tekst;
     private Date vremeKreiranja;
+    private int brojLajkova;     // Dodato prema SQL-u
+    private int brojDislajkova;  // Dodato prema SQL-u
     private int vestId;
 }
