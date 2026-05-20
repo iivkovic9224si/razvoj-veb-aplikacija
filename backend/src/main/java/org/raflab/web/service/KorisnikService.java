@@ -12,12 +12,19 @@ public class KorisnikService {
     private final KorisnikRepository korisnikRepository = new KorisnikRepository();
 
     public KorisnikResponse login(KorisnikRequest request) {
+        if (request.getEmail() == null || !request.getEmail().contains("@")) {
+            throw new RuntimeException("Email nije u dobrom formatu!");
+        }
+        if (request.getLozinka() == null || request.getLozinka().length() < 4) {
+            throw new RuntimeException("Lozinka mora imati bar 4 karaktera!");
+        }
         String hashedLozinka = HashUtils.sha256(request.getLozinka());
         Korisnik k = korisnikRepository.findKorisnik(request.getEmail(), hashedLozinka);
         return (k != null) ? mapToResponse(k) : null;
     }
 
     public List<KorisnikResponse> findAll(int page) {
+        if (page < 1) page = 1;
         int limit = 10;
         int offset = (page - 1) * limit;
         return korisnikRepository.findAllPaginated(offset, limit).stream()
@@ -26,7 +33,8 @@ public class KorisnikService {
     }
 
     public int getTotalPages() {
-        return (int) Math.ceil((double) korisnikRepository.countAll() / 10);
+        int total = korisnikRepository.countAll();
+        return (int) Math.ceil((double) total / 10);
     }
 
     private KorisnikResponse mapToResponse(Korisnik k) {
