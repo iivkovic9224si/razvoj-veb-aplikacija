@@ -11,6 +11,8 @@ public class KomentarService {
     private final KomentarRepository komentarRepository = new KomentarRepository();
 
     public List<KomentarResponse> getByVest(int vestId, int page) {
+        if (vestId <= 0) throw new RuntimeException("ID vesti nije validan!");
+        if (page < 1) page = 1;
         int limit = 10;
         int offset = (page - 1) * limit;
         return komentarRepository.findByVestPaginated(vestId, offset, limit).stream()
@@ -20,6 +22,10 @@ public class KomentarService {
     }
 
     public void addComment(KomentarRequest req) {
+        if (req.getAutor() == null || req.getAutor().trim().isEmpty()) throw new RuntimeException("Autor je obavezan!");
+        if (req.getTekst() == null || req.getTekst().trim().isEmpty()) throw new RuntimeException("Tekst komentara je obavezan!");
+        if (req.getVestId() <= 0) throw new RuntimeException("Komentar mora biti vezan za validnu vest!");
+
         Komentar k = new Komentar(0, req.getAutor(), req.getTekst(), null, 0, 0, req.getVestId());
         komentarRepository.create(k);
     }

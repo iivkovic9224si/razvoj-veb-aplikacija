@@ -14,57 +14,60 @@ public class JwtAuthorizationFilter {
         String path = req.pathInfo();
         String method = req.requestMethod();
 
-        // 1. JAVNE RUTE - Propuštamo ih odmah, ne treba token
-        if (path.equals("/login") || method.equals("OPTIONS") || path.equals("/test")) {
+        // 1. JAVNE RUTE (Samo ispravljeni endpointi sa /api)
+        if (path.equals("/api/login") || method.equals("OPTIONS") || path.equals("/api/test") || path.equals("/api/hello")) {
             return;
         }
 
-        // Sve GET metode na javnom delu aplikacije su slobodne za čitanje
-        if (method.equals("GET") && (path.startsWith("/news") || path.startsWith("/categories") || path.startsWith("/comments"))) {
+        // Dopuna u JwtAuthorizationFilter.java unutar handleAuth filtera:
+        if (method.equals("POST") && (path.endsWith("/like") || path.endsWith("/dislike"))) {
+            return; // Propuštaj klikove na lajk i dislajk bez provere tokena
+        }
+
+        // Javne GET rute
+        if (method.equals("GET") && (
+                path.startsWith("/api/vesti") ||
+                        path.startsWith("/api/kategorije") ||
+                        path.startsWith("/api/komentari") ||
+                        path.startsWith("/api/tagovi"))) {
             return;
         }
 
-        // Takođe, slanje komentara (POST /comments) je javno prema specifikaciji (bilo ko može komentarisati)
-        if (method.equals("POST") && path.equals("/comments")) {
+        // Javno slanje komentara
+        if (method.equals("POST") && path.equals("/api/komentari")) {
             return;
         }
 
-        // 2. ZAŠTIĆENE RUTE - Provera Authorization Header-a
+        // 2. PROVERA TOKENA
         String authHeader = req.headers("Authorization");
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
             halt(401, "{\"error\": \"Pristup odbijen. Token nedostaje ili je neispravan.\"}");
         }
 
-        String token = authHeader.substring(7); // Uzimamo samo string tokena bez "Bearer "
+        String token = authHeader.substring(7);
 
         try {
-            // Validacija i dekodovanje tokena pomoću našeg ključa
+            // OVDE JE BILA GREŠKA - sad je ispravljeno
             Algorithm algorithm = Algorithm.HMAC256(AuthService.SECRET_KEY);
             DecodedJWT jwt = JWT.require(algorithm).build().verify(token);
 
-            String tip = jwt.getClaim("tip").asString();       // ADMINISTRATOR ili STVARALAC_SADRZAJA
-            String status = jwt.getClaim("status").asString();   // AKTIVAN ili NEAKTIVAN
+            String tip = jwt.getClaim("tip").asString();
+            String status = jwt.getClaim("status").asString();
 
-            // Dodatna odbrana: ako je admin u međuvremenu ugasio ovog korisnika
             if ("NEAKTIVAN".equals(status)) {
                 halt(403, "{\"error\": \"Vaš nalog je deaktiviran.\"}");
             }
 
-            // 3. PRAVILA AUTORIZACIJE (Uloge)
-
-            // Pravilo: Ruti /users (CMS upravljanje korisnicima) može pristupiti SAMO Admin
-            if (path.startsWith("/users") && !"ADMINISTRATOR".equals(tip)) {
-                halt(403, "{\"error\": \"Nemate privilegije za ovu akciju. Samo Administrator.\"}");
+            // 3. PRAVILA (Usklađeno sa /api/korisnici)
+            if (path.startsWith("/api/korisnici") && !"ADMINISTRATOR".equals(tip)) {
+                halt(403, "{\"error\": \"Samo Administrator može upravljati korisnicima.\"}");
             }
 
-            // Za rute /news i /categories (POST, PUT, DELETE) - dozvoljeno i Adminu i Autoru
-            // (Pošto smo prošli gornje provere, ovde samo obezbeđujemo da neulogovani nemaju pristup)
-            if ((path.startsWith("/news") || path.startsWith("/categories")) &&
+            if ((path.startsWith("/api/vesti") || path.startsWith("/api/kategorije")) &&
                     !("ADMINISTRATOR".equals(tip) || "STVARALAC_SADRZAJA".equals(tip))) {
                 halt(403, "{\"error\": \"Zabranjen pristup.\"}");
             }
 
-            // Čuvamo podatke o ulogovanom korisniku unutar request-a, zatrebaće kolegi u kontrolerima
             req.attribute("trenutniKorisnikId", jwt.getClaim("id").asInt());
             req.attribute("trenutniKorisnikTip", tip);
 

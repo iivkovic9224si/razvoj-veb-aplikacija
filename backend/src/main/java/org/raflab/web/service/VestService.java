@@ -13,6 +13,7 @@ public class VestService {
     private final TagRepository tagRepository = new TagRepository();
 
     public List<VestResponse> getAll(int page) {
+        if (page < 1) page = 1;
         int limit = 10;
         int offset = (page - 1) * limit;
         return vestRepository.findAllPaginated(offset, limit).stream()
@@ -21,6 +22,7 @@ public class VestService {
     }
 
     public VestResponse getById(int id) {
+        if (id <= 0) throw new RuntimeException("ID vesti nije validan!");
         Vest v = vestRepository.findById(id);
         if (v == null) return null;
         vestRepository.incrementVisitCount(id);
@@ -28,6 +30,12 @@ public class VestService {
     }
 
     public void create(VestRequest req, int autorId) {
+        // VALIDACIJA
+        if (req.getNaslov() == null || req.getNaslov().trim().isEmpty()) throw new RuntimeException("Naslov je obavezan!");
+        if (req.getTekst() == null || req.getTekst().trim().isEmpty()) throw new RuntimeException("Tekst vesti je obavezan!");
+        if (req.getKategorijaId() <= 0) throw new RuntimeException("Morate izabrati kategoriju!");
+        if (autorId <= 0) throw new RuntimeException("Autor vesti nije prepoznat!");
+
         Vest v = new Vest(0, req.getNaslov(), req.getTekst(), null, 0, 0, 0, autorId, req.getKategorijaId());
         vestRepository.create(v, req.getTagovi());
     }
@@ -42,7 +50,6 @@ public class VestService {
         res.setBrojLajkova(v.getBrojLajkova());
         res.setBrojDislajkova(v.getBrojDislajkova());
 
-        // Izvlačimo tagove za tu vest preko TagRepository-ja
         List<String> tagoviReči = tagRepository.getTagsForVest(v.getId()).stream()
                 .map(t -> t.getKljucnaRec())
                 .collect(Collectors.toList());

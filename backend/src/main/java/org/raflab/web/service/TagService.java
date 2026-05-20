@@ -9,7 +9,8 @@ public class TagService {
     private final TagRepository tagRepository = new TagRepository();
 
     public List<TagResponse> getAll(int page) {
-        int limit = 20; // Za tagove možemo više po stranici
+        if (page < 1) page = 1;
+        int limit = 20;
         int offset = (page - 1) * limit;
         return tagRepository.findAllPaginated(offset, limit).stream()
                 .map(t -> new TagResponse(t.getId(), t.getKljucnaRec()))
