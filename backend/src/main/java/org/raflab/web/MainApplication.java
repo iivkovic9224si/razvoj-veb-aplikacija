@@ -1,7 +1,7 @@
 package org.raflab.web;
 
 import com.google.gson.Gson;
-//import org.raflab.web.auth.JwtAuthorizationFilter;
+import org.raflab.web.auth.JwtAuthorizationFilter;
 import org.raflab.web.controller.*;
 import static spark.Spark.*;
 
@@ -35,7 +35,7 @@ public class MainApplication {
         // =================================================================
         // 4. TVOJ DEO: Kačenje filtera za JWT proveru i kontrolu uloga
         // =================================================================
-       // before("/*", JwtAuthorizationFilter.handleAuth);
+        before("/*", JwtAuthorizationFilter.handleAuth);
 
         // 5. REGISTRACIJA KONTROLERA (Kolegin deo)
         // Ovde se instanciraju kontroleri i pokreću njihove rute
