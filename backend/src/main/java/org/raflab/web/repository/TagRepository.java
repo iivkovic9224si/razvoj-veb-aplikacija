@@ -8,9 +8,34 @@ import java.util.List;
 
 public class TagRepository {
 
+    public List<Tag> findAllPaginated(int offset, int limit) {
+        List<Tag> tagovi = new ArrayList<>();
+        String upit = "SELECT * FROM tagovi LIMIT ? OFFSET ?";
+        try (Connection con = DatabaseConnection.getConnection();
+             PreparedStatement st = con.prepareStatement(upit)) {
+            st.setInt(1, limit);
+            st.setInt(2, offset);
+            try (ResultSet rs = st.executeQuery()) {
+                while (rs.next()) {
+                    tagovi.add(new Tag(rs.getInt("id"), rs.getString("kljucna_rec")));
+                }
+            }
+        } catch (SQLException e) { e.printStackTrace(); }
+        return tagovi;
+    }
+
+    public int countAll() {
+        String upit = "SELECT COUNT(*) FROM tagovi";
+        try (Connection con = DatabaseConnection.getConnection();
+             Statement st = con.createStatement();
+             ResultSet rs = st.executeQuery(upit)) {
+            if (rs.next()) return rs.getInt(1);
+        } catch (SQLException e) { e.printStackTrace(); }
+        return 0;
+    }
+
     public List<Tag> getTagsForVest(int vestId) {
         List<Tag> tagovi = new ArrayList<>();
-        // Promenjeno t.rec u t.kljucna_rec
         String upit = "SELECT t.id, t.kljucna_rec FROM tagovi t " +
                 "JOIN vest_tag vt ON t.id = vt.tag_id " +
                 "WHERE vt.vest_id = ?";
@@ -27,7 +52,6 @@ public class TagRepository {
     }
 
     public int getOrInsertTag(String kljucnaRec) {
-        // Promenjeno u kljucna_rec
         String selectUpit = "SELECT id FROM tagovi WHERE kljucna_rec = ?";
         try (Connection con = DatabaseConnection.getConnection();
              PreparedStatement st = con.prepareStatement(selectUpit)) {
@@ -36,7 +60,6 @@ public class TagRepository {
                 if (rs.next()) return rs.getInt("id");
             }
 
-            // Ako ne postoji, ubaci ga
             String insertUpit = "INSERT INTO tagovi (kljucna_rec) VALUES (?)";
             try (PreparedStatement stInsert = con.prepareStatement(insertUpit, Statement.RETURN_GENERATED_KEYS)) {
                 stInsert.setString(1, kljucnaRec);

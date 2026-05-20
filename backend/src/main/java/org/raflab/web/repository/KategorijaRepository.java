@@ -8,17 +8,30 @@ import java.util.List;
 
 public class KategorijaRepository {
 
-    public List<Kategorija> findAll() {
+    public List<Kategorija> findAllPaginated(int offset, int limit) {
         List<Kategorija> kategorije = new ArrayList<>();
-        String upit = "SELECT * FROM kategorije";
+        String upit = "SELECT * FROM kategorije LIMIT ? OFFSET ?";
         try (Connection con = DatabaseConnection.getConnection();
-             Statement st = con.createStatement();
-             ResultSet rs = st.executeQuery(upit)) {
-            while (rs.next()) {
-                kategorije.add(new Kategorija(rs.getInt("id"), rs.getString("ime"), rs.getString("opis")));
+             PreparedStatement st = con.prepareStatement(upit)) {
+            st.setInt(1, limit);
+            st.setInt(2, offset);
+            try (ResultSet rs = st.executeQuery()) {
+                while (rs.next()) {
+                    kategorije.add(new Kategorija(rs.getInt("id"), rs.getString("ime"), rs.getString("opis")));
+                }
             }
         } catch (SQLException e) { e.printStackTrace(); }
         return kategorije;
+    }
+
+    public int countAll() {
+        String upit = "SELECT COUNT(*) FROM kategorije";
+        try (Connection con = DatabaseConnection.getConnection();
+             Statement st = con.createStatement();
+             ResultSet rs = st.executeQuery(upit)) {
+            if (rs.next()) return rs.getInt(1);
+        } catch (SQLException e) { e.printStackTrace(); }
+        return 0;
     }
 
     public void create(Kategorija k) {
