@@ -9,5 +9,5 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class Tag {
     private int id;
-    private String rec;
+    private String kljucnaRec;
 }

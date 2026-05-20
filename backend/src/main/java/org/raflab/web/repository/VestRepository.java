@@ -17,9 +17,17 @@ public class VestRepository {
             st.setInt(2, limit);
             try (ResultSet rs = st.executeQuery()) {
                 while (rs.next()) {
-                    vesti.add(new Vest(rs.getInt("id"), rs.getString("naslov"), rs.getString("tekst"),
-                              rs.getTimestamp("vreme_kreiranja"), rs.getInt("broj_poseta"),
-                              rs.getInt("autor_id"), rs.getInt("kategorija_id")));
+                    vesti.add(new Vest(
+                            rs.getInt("id"),
+                            rs.getString("naslov"),
+                            rs.getString("tekst"),
+                            rs.getTimestamp("vreme_kreiranja"),
+                            rs.getInt("broj_poseta"),
+                            rs.getInt("broj_lajkova"),      // Dodato mapiranje
+                            rs.getInt("broj_dislajkova"),   // Dodato mapiranje
+                            rs.getInt("autor_id"),
+                            rs.getInt("kategorija_id")
+                    ));
                 }
             }
         } catch (SQLException e) { e.printStackTrace(); }
@@ -33,9 +41,17 @@ public class VestRepository {
             st.setInt(1, id);
             try (ResultSet rs = st.executeQuery()) {
                 if (rs.next()) {
-                    return new Vest(rs.getInt("id"), rs.getString("naslov"), rs.getString("tekst"),
-                           rs.getTimestamp("vreme_kreiranja"), rs.getInt("broj_poseta"),
-                           rs.getInt("autor_id"), rs.getInt("kategorija_id"));
+                    return new Vest(
+                            rs.getInt("id"),
+                            rs.getString("naslov"),
+                            rs.getString("tekst"),
+                            rs.getTimestamp("vreme_kreiranja"),
+                            rs.getInt("broj_poseta"),
+                            rs.getInt("broj_lajkova"),      // Dodato mapiranje
+                            rs.getInt("broj_dislajkova"),   // Dodato mapiranje
+                            rs.getInt("autor_id"),
+                            rs.getInt("kategorija_id")
+                    );
                 }
             }
         } catch (SQLException e) { e.printStackTrace(); }
@@ -43,7 +59,9 @@ public class VestRepository {
     }
 
     public void create(Vest v) {
-        String upit = "INSERT INTO vesti (naslov, tekst, autor_id, kategorija_id, vreme_kreiranja, broj_poseta) VALUES (?, ?, ?, ?, NOW(), 0)";
+        // Eksplicitno postavljamo broj_lajkova i broj_dislajkova na 0 pri kreiranju
+        String upit = "INSERT INTO vesti (naslov, tekst, autor_id, kategorija_id, vreme_kreiranja, broj_poseta, broj_lajkova, broj_dislajkova) " +
+                "VALUES (?, ?, ?, ?, NOW(), 0, 0, 0)";
         try (Connection con = DatabaseConnection.getConnection();
              PreparedStatement st = con.prepareStatement(upit)) {
             st.setString(1, v.getNaslov());
@@ -62,5 +80,4 @@ public class VestRepository {
             st.executeUpdate();
         } catch (SQLException e) { e.printStackTrace(); }
     }
-
 }

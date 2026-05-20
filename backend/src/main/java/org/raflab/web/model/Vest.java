@@ -14,6 +14,8 @@ public class Vest {
     private String tekst;
     private Date vremeKreiranja;
     private int brojPoseta;
+    private int brojLajkova;
+    private int brojDislajkova;
     private int autorId;
     private int kategorijaId;
 }
