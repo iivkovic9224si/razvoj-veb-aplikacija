@@ -12,9 +12,8 @@ public class KomentarService {
 
     public List<KomentarResponse> getByVest(int vestId, int page) {
         if (vestId <= 0) throw new RuntimeException("ID vesti nije validan!");
-        if (page < 1) page = 1;
         int limit = 10;
-        int offset = (page - 1) * limit;
+        int offset = (Math.max(1, page) - 1) * limit;
         return komentarRepository.findByVestPaginated(vestId, offset, limit).stream()
                 .map(k -> new KomentarResponse(k.getId(), k.getAutor(), k.getTekst(),
                         k.getVremeKreiranja(), k.getBrojLajkova(), k.getBrojDislajkova()))
@@ -24,17 +23,11 @@ public class KomentarService {
     public void addComment(KomentarRequest req) {
         if (req.getAutor() == null || req.getAutor().trim().isEmpty()) throw new RuntimeException("Autor je obavezan!");
         if (req.getTekst() == null || req.getTekst().trim().isEmpty()) throw new RuntimeException("Tekst komentara je obavezan!");
-        if (req.getVestId() <= 0) throw new RuntimeException("Komentar mora biti vezan za validnu vest!");
+        if (req.getVestId() <= 0) throw new RuntimeException("Vest nije validna!");
 
-        Komentar k = new Komentar(0, req.getAutor(), req.getTekst(), null, 0, 0, req.getVestId());
-        komentarRepository.create(k);
+        komentarRepository.create(new Komentar(0, req.getAutor(), req.getTekst(), null, 0, 0, req.getVestId()));
     }
 
-    public void likeComment(int id) {
-        komentarRepository.incrementLikes(id);
-    }
-
-    public void dislikeComment(int id) {
-        komentarRepository.incrementDislikes(id);
-    }
+    public void likeComment(int id) { komentarRepository.incrementLikes(id); }
+    public void dislikeComment(int id) { komentarRepository.incrementDislikes(id); }
 }
