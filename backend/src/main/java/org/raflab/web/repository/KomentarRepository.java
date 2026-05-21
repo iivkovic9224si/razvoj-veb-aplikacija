@@ -29,18 +29,6 @@ public class KomentarRepository {
         return komentari;
     }
 
-    public int countByVest(int vestId) {
-        String upit = "SELECT COUNT(*) FROM komentari WHERE vest_id = ?";
-        try (Connection con = DatabaseConnection.getConnection();
-             PreparedStatement st = con.prepareStatement(upit)) {
-            st.setInt(1, vestId);
-            try (ResultSet rs = st.executeQuery()) {
-                if (rs.next()) return rs.getInt(1);
-            }
-        } catch (SQLException e) { e.printStackTrace(); }
-        return 0;
-    }
-
     public void create(Komentar k) {
         String upit = "INSERT INTO komentari (autor, tekst, vest_id, vreme_kreiranja) VALUES (?, ?, ?, NOW())";
         try (Connection con = DatabaseConnection.getConnection();
@@ -53,16 +41,14 @@ public class KomentarRepository {
     }
 
     public void incrementLikes(int id) {
-        String upit = "UPDATE komentari SET broj_lajkova = broj_lajkova + 1 WHERE id = ?";
-        try (Connection con = DatabaseConnection.getConnection();
-             PreparedStatement st = con.prepareStatement(upit)) {
-            st.setInt(1, id);
-            st.executeUpdate();
-        } catch (SQLException e) { e.printStackTrace(); }
+        executeSimpleUpdate("UPDATE komentari SET broj_lajkova = broj_lajkova + 1 WHERE id = ?", id);
     }
 
     public void incrementDislikes(int id) {
-        String upit = "UPDATE komentari SET broj_dislajkova = broj_dislajkova + 1 WHERE id = ?";
+        executeSimpleUpdate("UPDATE komentari SET broj_dislajkova = broj_dislajkova + 1 WHERE id = ?", id);
+    }
+
+    private void executeSimpleUpdate(String upit, int id) {
         try (Connection con = DatabaseConnection.getConnection();
              PreparedStatement st = con.prepareStatement(upit)) {
             st.setInt(1, id);

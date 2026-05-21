@@ -10,7 +10,7 @@ public class TagService {
 
     public List<TagResponse> getAll(int page) {
         if (page < 1) page = 1;
-        int limit = 20;
+        int limit = 30; // Obično tagova ima više, pa dajemo veći limit
         int offset = (page - 1) * limit;
         return tagRepository.findAllPaginated(offset, limit).stream()
                 .map(t -> new TagResponse(t.getId(), t.getKljucnaRec()))

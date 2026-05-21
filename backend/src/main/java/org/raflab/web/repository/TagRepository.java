@@ -2,6 +2,7 @@ package org.raflab.web.repository;
 
 import org.raflab.web.DatabaseConnection;
 import org.raflab.web.model.Tag;
+import org.raflab.web.model.Vest;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
@@ -24,21 +25,9 @@ public class TagRepository {
         return tagovi;
     }
 
-    public int countAll() {
-        String upit = "SELECT COUNT(*) FROM tagovi";
-        try (Connection con = DatabaseConnection.getConnection();
-             Statement st = con.createStatement();
-             ResultSet rs = st.executeQuery(upit)) {
-            if (rs.next()) return rs.getInt(1);
-        } catch (SQLException e) { e.printStackTrace(); }
-        return 0;
-    }
-
     public List<Tag> getTagsForVest(int vestId) {
         List<Tag> tagovi = new ArrayList<>();
-        String upit = "SELECT t.id, t.kljucna_rec FROM tagovi t " +
-                "JOIN vest_tag vt ON t.id = vt.tag_id " +
-                "WHERE vt.vest_id = ?";
+        String upit = "SELECT t.* FROM tagovi t JOIN vest_tag vt ON t.id = vt.tag_id WHERE vt.vest_id = ?";
         try (Connection con = DatabaseConnection.getConnection();
              PreparedStatement st = con.prepareStatement(upit)) {
             st.setInt(1, vestId);
@@ -51,34 +40,17 @@ public class TagRepository {
         return tagovi;
     }
 
-    public int getOrInsertTag(String kljucnaRec) {
-        String selectUpit = "SELECT id FROM tagovi WHERE kljucna_rec = ?";
-        try (Connection con = DatabaseConnection.getConnection();
-             PreparedStatement st = con.prepareStatement(selectUpit)) {
-            st.setString(1, kljucnaRec);
-            try (ResultSet rs = st.executeQuery()) {
-                if (rs.next()) return rs.getInt("id");
-            }
-
-            String insertUpit = "INSERT INTO tagovi (kljucna_rec) VALUES (?)";
-            try (PreparedStatement stInsert = con.prepareStatement(insertUpit, Statement.RETURN_GENERATED_KEYS)) {
-                stInsert.setString(1, kljucnaRec);
-                stInsert.executeUpdate();
-                try (ResultSet generatedKeys = stInsert.getGeneratedKeys()) {
-                    if (generatedKeys.next()) return generatedKeys.getInt(1);
-                }
-            }
-        } catch (SQLException e) { e.printStackTrace(); }
-        return -1;
-    }
-
-    public void linkTagToVest(int vestId, int tagId) {
-        String upit = "INSERT IGNORE INTO vest_tag (vest_id, tag_id) VALUES (?, ?)";
+    // Pomoćna metoda za pretragu vesti po tagu (traži se u specifikaciji)
+    public List<Integer> getVestIdsByTag(String kljucnaRec) {
+        List<Integer> ids = new ArrayList<>();
+        String upit = "SELECT vt.vest_id FROM vest_tag vt JOIN tagovi t ON vt.tag_id = t.id WHERE t.kljucna_rec = ?";
         try (Connection con = DatabaseConnection.getConnection();
              PreparedStatement st = con.prepareStatement(upit)) {
-            st.setInt(1, vestId);
-            st.setInt(2, tagId);
-            st.executeUpdate();
+            st.setString(1, kljucnaRec);
+            try (ResultSet rs = st.executeQuery()) {
+                while (rs.next()) ids.add(rs.getInt("vest_id"));
+            }
         } catch (SQLException e) { e.printStackTrace(); }
+        return ids;
     }
 }

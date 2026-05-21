@@ -11,28 +11,36 @@ public class KomentarController {
 
     public void registerRoutes() {
         get("/api/vesti/:id/komentari", (req, res) -> {
-            int vestId = Integer.parseInt(req.params(":id"));
-            int page = req.queryParams("page") != null ? Integer.parseInt(req.queryParams("page")) : 1;
-            return gson.toJson(komentarService.getByVest(vestId, page));
+            try {
+                int vestId = Integer.parseInt(req.params(":id"));
+                int page = req.queryParams("page") != null ? Integer.parseInt(req.queryParams("page")) : 1;
+                return gson.toJson(komentarService.getByVest(vestId, page));
+            } catch (Exception e) {
+                res.status(400);
+                return gson.toJson(e.getMessage());
+            }
         });
 
         post("/api/komentari", (req, res) -> {
-            KomentarRequest reqDto = gson.fromJson(req.body(), KomentarRequest.class);
-            komentarService.addComment(reqDto);
-            res.status(201);
-            return gson.toJson("Komentar dodat");
+            try {
+                KomentarRequest reqDto = gson.fromJson(req.body(), KomentarRequest.class);
+                komentarService.addComment(reqDto);
+                res.status(201);
+                return gson.toJson("Komentar dodat");
+            } catch (Exception e) {
+                res.status(400);
+                return gson.toJson(e.getMessage());
+            }
         });
 
         post("/api/komentari/:id/like", (req, res) -> {
-            int id = Integer.parseInt(req.params(":id"));
-            komentarService.likeComment(id);
-            return gson.toJson("Komentar uspesno lajkovan");
+            komentarService.likeComment(Integer.parseInt(req.params(":id")));
+            return gson.toJson("OK");
         });
 
         post("/api/komentari/:id/dislike", (req, res) -> {
-            int id = Integer.parseInt(req.params(":id"));
-            komentarService.dislikeComment(id);
-            return gson.toJson("Komentar uspesno dislajkovan");
+            komentarService.dislikeComment(Integer.parseInt(req.params(":id")));
+            return gson.toJson("OK");
         });
     }
 }

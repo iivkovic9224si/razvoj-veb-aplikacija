@@ -55,6 +55,18 @@ public class KategorijaRepository {
         } catch (SQLException e) { e.printStackTrace(); }
     }
 
+    public boolean hasNews(int id) {
+        String upit = "SELECT COUNT(*) FROM vesti WHERE kategorija_id = ?";
+        try (Connection con = DatabaseConnection.getConnection();
+             PreparedStatement st = con.prepareStatement(upit)) {
+            st.setInt(1, id);
+            try (ResultSet rs = st.executeQuery()) {
+                if (rs.next()) return rs.getInt(1) > 0;
+            }
+        } catch (SQLException e) { e.printStackTrace(); }
+        return false;
+    }
+
     public void delete(int id) {
         String upit = "DELETE FROM kategorije WHERE id = ?";
         try (Connection con = DatabaseConnection.getConnection();
