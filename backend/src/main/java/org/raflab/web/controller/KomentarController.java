@@ -14,7 +14,6 @@ public class KomentarController {
             try {
                 int vestId = Integer.parseInt(req.params(":id"));
                 int page = req.queryParams("page") != null ? Integer.parseInt(req.queryParams("page")) : 1;
-                // Vraća PagedResponse sa podacima i brojem strana
                 return gson.toJson(komentarService.getByVest(vestId, page));
             } catch (Exception e) {
                 res.status(400);
@@ -34,14 +33,48 @@ public class KomentarController {
             }
         });
 
+        // LAJK KOMENTARA SA KONTROLOM SESIJE
         post("/api/komentari/:id/like", (req, res) -> {
-            komentarService.likeComment(Integer.parseInt(req.params(":id")));
-            return gson.toJson("OK");
+            try {
+                int id = Integer.parseInt(req.params(":id"));
+                var session = req.session(true);
+                String sessionKey = "voted_komentar_" + id;
+
+                // Provera da li je već glasao (isto kao kod vesti)
+                if (session.attribute(sessionKey) != null) {
+                    res.status(400);
+                    return gson.toJson("Već ste dali svoj glas za ovaj komentar!");
+                }
+
+                komentarService.likeComment(id);
+                session.attribute(sessionKey, "LIKE");
+                return gson.toJson("Komentar uspešno lajkovan");
+            } catch (Exception e) {
+                res.status(400);
+                return gson.toJson(e.getMessage());
+            }
         });
 
+        // DISLAJK KOMENTARA SA KONTROLOM SESIJE
         post("/api/komentari/:id/dislike", (req, res) -> {
-            komentarService.dislikeComment(Integer.parseInt(req.params(":id")));
-            return gson.toJson("OK");
+            try {
+                int id = Integer.parseInt(req.params(":id"));
+                var session = req.session(true);
+                String sessionKey = "voted_komentar_" + id;
+
+                // Provera da li je već glasao
+                if (session.attribute(sessionKey) != null) {
+                    res.status(400);
+                    return gson.toJson("Već ste dali svoj glas za ovaj komentar!");
+                }
+
+                komentarService.dislikeComment(id);
+                session.attribute(sessionKey, "DISLIKE");
+                return gson.toJson("Komentar uspešno dislajkovan");
+            } catch (Exception e) {
+                res.status(400);
+                return gson.toJson(e.getMessage());
+            }
         });
     }
 }
