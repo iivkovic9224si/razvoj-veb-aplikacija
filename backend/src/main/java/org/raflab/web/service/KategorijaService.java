@@ -36,6 +36,12 @@ public class KategorijaService {
 
     public void delete(int id) {
         if (id <= 0) throw new RuntimeException("ID nije validan!");
+
+        // Specifikacija: Provera da li kategorija ima vesti
+        if (kategorijaRepository.hasNews(id)) {
+            throw new RuntimeException("Nije moguće obrisati kategoriju koja sadrži vesti!");
+        }
+
         kategorijaRepository.delete(id);
     }
 }

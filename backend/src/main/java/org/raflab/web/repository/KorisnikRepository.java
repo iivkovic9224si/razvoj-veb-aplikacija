@@ -8,25 +8,80 @@ import java.util.List;
 
 public class KorisnikRepository {
 
-    public Korisnik findKorisnik(String email, String lozinka) {
-        // DODAJ OVE DVE LINIJE ZA DEBUG:
-        System.out.println("Trazim email: " + email);
-        System.out.println("Trazim hash: " + lozinka);
+    public void create(Korisnik k) {
+        String upit = "INSERT INTO korisnici (email, ime, prezime, tip, status, lozinka) VALUES (?, ?, ?, ?, ?, ?)";
+        try (Connection con = DatabaseConnection.getConnection();
+             PreparedStatement st = con.prepareStatement(upit)) {
+            st.setString(1, k.getEmail());
+            st.setString(2, k.getIme());
+            st.setString(3, k.getPrezime());
+            st.setString(4, k.getTip());
+            st.setString(5, k.getStatus());
+            st.setString(6, k.getLozinka());
+            st.executeUpdate();
+        } catch (SQLException e) { e.printStackTrace(); throw new RuntimeException("Greška pri upisu korisnika."); }
+    }
 
+    public void update(Korisnik k) {
+        String upit = "UPDATE korisnici SET email = ?, ime = ?, prezime = ?, tip = ? WHERE id = ?";
+        try (Connection con = DatabaseConnection.getConnection();
+             PreparedStatement st = con.prepareStatement(upit)) {
+            st.setString(1, k.getEmail());
+            st.setString(2, k.getIme());
+            st.setString(3, k.getPrezime());
+            st.setString(4, k.getTip());
+            st.setInt(5, k.getId());
+            st.executeUpdate();
+        } catch (SQLException e) { e.printStackTrace(); throw new RuntimeException("Greška pri izmeni korisnika."); }
+    }
+
+    public void updateStatus(int id, String status) {
+        String upit = "UPDATE korisnici SET status = ? WHERE id = ?";
+        try (Connection con = DatabaseConnection.getConnection();
+             PreparedStatement st = con.prepareStatement(upit)) {
+            st.setString(1, status);
+            st.setInt(2, id);
+            st.executeUpdate();
+        } catch (SQLException e) { e.printStackTrace(); }
+    }
+
+    public Korisnik findById(int id) {
+        String upit = "SELECT * FROM korisnici WHERE id = ?";
+        try (Connection con = DatabaseConnection.getConnection();
+             PreparedStatement st = con.prepareStatement(upit)) {
+            st.setInt(1, id);
+            try (ResultSet rs = st.executeQuery()) {
+                if (rs.next()) {
+                    return new Korisnik(rs.getInt("id"), rs.getString("email"), rs.getString("ime"),
+                            rs.getString("prezime"), rs.getString("tip"), rs.getString("status"), rs.getString("lozinka"));
+                }
+            }
+        } catch (SQLException e) { e.printStackTrace(); }
+        return null;
+    }
+
+    public Korisnik findByEmail(String email) {
+        String upit = "SELECT * FROM korisnici WHERE email = ?";
+        try (Connection con = DatabaseConnection.getConnection();
+             PreparedStatement st = con.prepareStatement(upit)) {
+            st.setString(1, email);
+            try (ResultSet rs = st.executeQuery()) {
+                if (rs.next()) return new Korisnik(rs.getInt("id"), rs.getString("email"), null, null, null, null, null);
+            }
+        } catch (SQLException e) { e.printStackTrace(); }
+        return null;
+    }
+
+    public Korisnik findKorisnik(String email, String lozinka) {
         String upit = "SELECT * FROM korisnici WHERE email = ? AND lozinka = ? AND status = 'AKTIVAN'";
         try (Connection con = DatabaseConnection.getConnection();
              PreparedStatement st = con.prepareStatement(upit)) {
-
             st.setString(1, email);
             st.setString(2, lozinka);
-
             try (ResultSet rs = st.executeQuery()) {
                 if (rs.next()) {
-                    System.out.println("Korisnik PRONADJEN u bazi!"); // DODAJ OVO
                     return new Korisnik(rs.getInt("id"), rs.getString("email"), rs.getString("ime"),
                             rs.getString("prezime"), rs.getString("tip"), rs.getString("status"), null);
-                } else {
-                    System.out.println("Korisnik NIJE pronadjen. Proveri bazu!"); // DODAJ OVO
                 }
             }
         } catch (SQLException e) { e.printStackTrace(); }

@@ -10,39 +10,49 @@ public class VestController {
     private final Gson gson = new Gson();
 
     public void registerRoutes() {
+        // LISTANJE I PRETRAGA
         get("/api/vesti", (req, res) -> {
+            String q = req.queryParams("query");
             int page = req.queryParams("page") != null ? Integer.parseInt(req.queryParams("page")) : 1;
+            if (q != null && !q.isEmpty()) return gson.toJson(vestService.search(q, page));
             return gson.toJson(vestService.getAll(page));
         });
 
         get("/api/vesti/:id", (req, res) -> {
-            int id = Integer.parseInt(req.params(":id"));
-            var vest = vestService.getById(id);
-            if (vest == null) {
-                res.status(404);
-                return gson.toJson("Vest nije pronadjena");
-            }
+            var vest = vestService.getById(Integer.parseInt(req.params(":id")));
+            if (vest == null) { res.status(404); return gson.toJson("Vest nije pronadjena"); }
             return gson.toJson(vest);
         });
 
+        // CMS OPERACIJE
         post("/api/vesti", (req, res) -> {
             VestRequest vestReq = gson.fromJson(req.body(), VestRequest.class);
-            // Ovde bi autorId trebalo da ide iz JWT-a, za sad stavljamo fiksno 1
-            vestService.create(vestReq, 1);
+            int autorId = req.attribute("trenutniKorisnikId"); // Iz JWT Filter-a
+            vestService.create(vestReq, autorId);
             res.status(201);
             return gson.toJson("Vest uspesno kreirana");
         });
 
+        put("/api/vesti/:id", (req, res) -> {
+            VestRequest vestReq = gson.fromJson(req.body(), VestRequest.class);
+            vestService.update(Integer.parseInt(req.params(":id")), vestReq);
+            return gson.toJson("Vest uspesno izmenjena");
+        });
+
+        delete("/api/vesti/:id", (req, res) -> {
+            vestService.delete(Integer.parseInt(req.params(":id")));
+            return gson.toJson("Vest uspesno obrisana");
+        });
+
+        // REAKCIJE
         post("/api/vesti/:id/like", (req, res) -> {
-            int id = Integer.parseInt(req.params(":id"));
-            vestService.likeVest(id);
-            return gson.toJson("Vest uspesno lajkovana");
+            vestService.likeVest(Integer.parseInt(req.params(":id")));
+            return gson.toJson("OK");
         });
 
         post("/api/vesti/:id/dislike", (req, res) -> {
-            int id = Integer.parseInt(req.params(":id"));
-            vestService.dislikeVest(id);
-            return gson.toJson("Vest uspesno dislajkovana");
+            vestService.dislikeVest(Integer.parseInt(req.params(":id")));
+            return gson.toJson("OK");
         });
     }
 }
