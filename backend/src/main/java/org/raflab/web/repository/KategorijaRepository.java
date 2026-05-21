@@ -8,6 +8,19 @@ import java.util.List;
 
 public class KategorijaRepository {
 
+    // Dodaj ovu metodu u postojeći KategorijaRepository
+    public Kategorija findByName(String ime) {
+        String upit = "SELECT * FROM kategorije WHERE ime = ?";
+        try (Connection con = DatabaseConnection.getConnection();
+             PreparedStatement st = con.prepareStatement(upit)) {
+            st.setString(1, ime);
+            try (ResultSet rs = st.executeQuery()) {
+                if (rs.next()) return new Kategorija(rs.getInt("id"), rs.getString("ime"), rs.getString("opis"));
+            }
+        } catch (SQLException e) { e.printStackTrace(); }
+        return null;
+    }
+
     public List<Kategorija> findAllPaginated(int offset, int limit) {
         List<Kategorija> kategorije = new ArrayList<>();
         String upit = "SELECT * FROM kategorije LIMIT ? OFFSET ?";

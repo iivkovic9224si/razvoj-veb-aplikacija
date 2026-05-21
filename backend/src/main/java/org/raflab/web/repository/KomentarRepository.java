@@ -29,6 +29,18 @@ public class KomentarRepository {
         return komentari;
     }
 
+    public int countByVest(int vestId) {
+        String upit = "SELECT COUNT(*) FROM komentari WHERE vest_id = ?";
+        try (Connection con = DatabaseConnection.getConnection();
+             PreparedStatement st = con.prepareStatement(upit)) {
+            st.setInt(1, vestId);
+            try (ResultSet rs = st.executeQuery()) {
+                if (rs.next()) return rs.getInt(1);
+            }
+        } catch (SQLException e) { e.printStackTrace(); }
+        return 0;
+    }
+
     public void create(Komentar k) {
         String upit = "INSERT INTO komentari (autor, tekst, vest_id, vreme_kreiranja) VALUES (?, ?, ?, NOW())";
         try (Connection con = DatabaseConnection.getConnection();

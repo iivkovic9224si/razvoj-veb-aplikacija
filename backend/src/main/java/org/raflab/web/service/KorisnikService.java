@@ -2,6 +2,7 @@ package org.raflab.web.service;
 
 import org.raflab.web.dto.request.KorisnikRequest;
 import org.raflab.web.dto.response.KorisnikResponse;
+import org.raflab.web.dto.response.PagedResponse;
 import org.raflab.web.model.Korisnik;
 import org.raflab.web.repository.KorisnikRepository;
 import org.raflab.web.utils.HashUtils;
@@ -11,19 +12,38 @@ import java.util.stream.Collectors;
 public class KorisnikService {
     private final KorisnikRepository korisnikRepository = new KorisnikRepository();
 
-    public KorisnikResponse login(KorisnikRequest request) {
-        if (request.getEmail() == null || !request.getEmail().contains("@")) {
-            throw new RuntimeException("Email nije u dobrom formatu!");
+    // Metoda za LOGIN (koju Controller traži)
+    public KorisnikResponse login(KorisnikRequest req) {
+        Korisnik k = korisnikRepository.findByEmail(req.getEmail());
+        if (k == null || !k.getLozinka().equals(HashUtils.sha256(req.getLozinka()))) {
+            throw new RuntimeException("Neispravan email ili lozinka!");
         }
-        String hashedLozinka = HashUtils.sha256(request.getLozinka());
-        Korisnik k = korisnikRepository.findKorisnik(request.getEmail(), hashedLozinka);
-        return (k != null) ? mapToResponse(k) : null;
+        return new KorisnikResponse(k.getId(), k.getEmail(), k.getIme(), k.getPrezime(), k.getTip(), k.getStatus(), null);
+    }
+
+    // Metoda za GET BY ID
+    public KorisnikResponse getById(int id) {
+        Korisnik k = korisnikRepository.findById(id);
+        if (k == null) return null;
+        return new KorisnikResponse(k.getId(), k.getEmail(), k.getIme(), k.getPrezime(), k.getTip(), k.getStatus(), null);
+    }
+
+    // Metoda za TOGGLE STATUS (Aktivacija/Deaktivacija)
+    public void toggleStatus(int id) {
+        Korisnik k = korisnikRepository.findById(id);
+        if (k == null) throw new RuntimeException("Korisnik ne postoji");
+
+        String noviStatus = k.getStatus().equals("AKTIVAN") ? "DEAKTIVIRAN" : "AKTIVAN";
+        korisnikRepository.updateStatus(id, noviStatus);
     }
 
     public void addKorisnik(KorisnikRequest req) {
-        if (req.getEmail() == null || req.getEmail().isEmpty()) throw new RuntimeException("Email je obavezan!");
-        if (korisnikRepository.findByEmail(req.getEmail()) != null) throw new RuntimeException("Email već postoji!");
-        if (!req.getLozinka().equals(req.getLozinkaPotvrda())) throw new RuntimeException("Lozinke se ne podudaraju!");
+        if (korisnikRepository.findByEmail(req.getEmail()) != null) {
+            throw new RuntimeException("Korisnik sa tim emailom već postoji!");
+        }
+        if (req.getLozinka() == null || !req.getLozinka().equals(req.getLozinkaPotvrda())) {
+            throw new RuntimeException("Lozinke se ne podudaraju!");
+        }
 
         String hash = HashUtils.sha256(req.getLozinka());
         Korisnik k = new Korisnik(0, req.getEmail(), req.getIme(), req.getPrezime(), req.getTip(), "AKTIVAN", hash);
@@ -34,38 +54,33 @@ public class KorisnikService {
         Korisnik postojeci = korisnikRepository.findById(id);
         if (postojeci == null) throw new RuntimeException("Korisnik nije pronađen.");
 
+        Korisnik saIstimEmailom = korisnikRepository.findByEmail(req.getEmail());
+        if (saIstimEmailom != null && saIstimEmailom.getId() != id) {
+            throw new RuntimeException("Email je već zauzet!");
+        }
+
         postojeci.setEmail(req.getEmail());
         postojeci.setIme(req.getIme());
         postojeci.setPrezime(req.getPrezime());
         postojeci.setTip(req.getTip());
 
+        if (req.getLozinka() != null && !req.getLozinka().isEmpty()) {
+            if (!req.getLozinka().equals(req.getLozinkaPotvrda())) {
+                throw new RuntimeException("Lozinke se ne podudaraju!");
+            }
+            postojeci.setLozinka(HashUtils.sha256(req.getLozinka()));
+        }
+
         korisnikRepository.update(postojeci);
     }
 
-    public void toggleStatus(int id) {
-        Korisnik k = korisnikRepository.findById(id);
-        if (k == null) throw new RuntimeException("Korisnik nije pronađen.");
-        if (k.getTip().equals("ADMINISTRATOR")) throw new RuntimeException("Adminu se ne može menjati status.");
-
-        String noviStatus = k.getStatus().equals("AKTIVAN") ? "NEAKTIVAN" : "AKTIVAN";
-        korisnikRepository.updateStatus(id, noviStatus);
-    }
-
-    public KorisnikResponse getById(int id) {
-        Korisnik k = korisnikRepository.findById(id);
-        return (k != null) ? mapToResponse(k) : null;
-    }
-
-    public List<KorisnikResponse> findAll(int page) {
+    public PagedResponse<KorisnikResponse> findAll(int page) {
         int limit = 10;
-        int offset = (page - 1) * limit;
-        return korisnikRepository.findAllPaginated(offset, limit).stream()
-                .map(this::mapToResponse)
+        int offset = (Math.max(1, page) - 1) * limit;
+        List<KorisnikResponse> podaci = korisnikRepository.findAllPaginated(offset, limit).stream()
+                .map(k -> new KorisnikResponse(k.getId(), k.getEmail(), k.getIme(), k.getPrezime(), k.getTip(), k.getStatus(), null))
                 .collect(Collectors.toList());
-    }
-
-    private KorisnikResponse mapToResponse(Korisnik k) {
-        return new KorisnikResponse(k.getId(), k.getEmail(), k.getIme(),
-                k.getPrezime(), k.getTip(), k.getStatus(), null);
+        int total = korisnikRepository.countAll();
+        return new PagedResponse<>(podaci, (int) Math.ceil((double) total / limit));
     }
 }

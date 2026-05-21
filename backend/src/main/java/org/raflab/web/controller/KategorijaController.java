@@ -16,17 +16,27 @@ public class KategorijaController {
         });
 
         post("/api/kategorije", (req, res) -> {
-            KategorijaRequest reqDto = gson.fromJson(req.body(), KategorijaRequest.class);
-            kategorijaService.create(reqDto);
-            res.status(201);
-            return gson.toJson("Kategorija dodata");
+            try {
+                KategorijaRequest reqDto = gson.fromJson(req.body(), KategorijaRequest.class);
+                kategorijaService.create(reqDto);
+                res.status(201);
+                return gson.toJson("Kategorija dodata");
+            } catch (Exception e) {
+                res.status(400);
+                return gson.toJson(e.getMessage());
+            }
         });
 
         put("/api/kategorije/:id", (req, res) -> {
-            int id = Integer.parseInt(req.params(":id"));
-            KategorijaRequest reqDto = gson.fromJson(req.body(), KategorijaRequest.class);
-            kategorijaService.update(id, reqDto);
-            return gson.toJson("Kategorija izmenjena");
+            try {
+                int id = Integer.parseInt(req.params(":id"));
+                KategorijaRequest reqDto = gson.fromJson(req.body(), KategorijaRequest.class);
+                kategorijaService.update(id, reqDto);
+                return gson.toJson("Kategorija izmenjena");
+            } catch (Exception e) {
+                res.status(400);
+                return gson.toJson(e.getMessage());
+            }
         });
 
         delete("/api/kategorije/:id", (req, res) -> {
@@ -34,7 +44,7 @@ public class KategorijaController {
                 kategorijaService.delete(Integer.parseInt(req.params(":id")));
                 return gson.toJson("Kategorija obrisana");
             } catch (RuntimeException e) {
-                res.status(400); // Bad Request jer ne dozvoljavamo brisanje
+                res.status(400);
                 return gson.toJson(e.getMessage());
             }
         });

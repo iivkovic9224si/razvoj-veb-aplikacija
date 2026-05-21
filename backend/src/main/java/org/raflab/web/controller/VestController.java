@@ -10,39 +10,102 @@ public class VestController {
     private final Gson gson = new Gson();
 
     public void registerRoutes() {
+        
+        // 1. UNIVERZALNA RUTA ZA LISTANJE, PRETRAGU I FILTERE (Prihvaćen backend-smallStuffFixing)
         get("/api/vesti", (req, res) -> {
+            Integer katId = req.queryParams("kategorija") != null ? Integer.parseInt(req.queryParams("kategorija")) : null;
+            String tag = req.queryParams("tag");
+            String search = req.queryParams("search");
             int page = req.queryParams("page") != null ? Integer.parseInt(req.queryParams("page")) : 1;
-            return gson.toJson(vestService.getAll(page));
+
+            return gson.toJson(vestService.getFiltered(katId, tag, search, page));
         });
 
+        // 2. RUTA ZA NAJČITANIJE VESTI (Zajednička ruta)
+        get("/api/vesti/najcitanije", (req, res) -> {
+            int page = req.queryParams("page") != null ? Integer.parseInt(req.queryParams("page")) : 1;
+            return gson.toJson(vestService.getMostRead(page));
+        });
+
+        // 3. POJEDINAČNA VEST SA EVIDENCIJOM POSETA PREKO SESIJE
         get("/api/vesti/:id", (req, res) -> {
             int id = Integer.parseInt(req.params(":id"));
-            var vest = vestService.getById(id);
-            if (vest == null) {
+            
+            // Logika sesije koja sprečava uvećavanje pregleda pri osvežavanju (zahtev iz specifikacije)
+            var session = req.session(true);
+            String sessionKey = "viewed_vest_" + id;
+            boolean vecPosetio = session.attribute(sessionKey) != null;
+
+            var v = vestService.getByIdWithVisitLogic(id, vecPosetio);
+            if (v == null) {
                 res.status(404);
-                return gson.toJson("Vest nije pronadjena");
+                return gson.toJson("Vest ne postoji");
             }
-            return gson.toJson(vest);
+
+            if (!vecPosetio) {
+                session.attribute(sessionKey, true);
+            }
+            return gson.toJson(v);
         });
 
+        // ==========================================
+        // CMS RUTE (ZAHTEVAJU JWT TOKEN - AUTORIZACIJA)
+        // ==========================================
+        
+        // KREIRANJE VESTI (Ispravno uzima trenutniKorisnikId iz tokena)
         post("/api/vesti", (req, res) -> {
-            VestRequest vestReq = gson.fromJson(req.body(), VestRequest.class);
-            // Ovde bi autorId trebalo da ide iz JWT-a, za sad stavljamo fiksno 1
-            vestService.create(vestReq, 1);
+            VestRequest vr = gson.fromJson(req.body(), VestRequest.class);
+            int autorId = req.attribute("trenutniKorisnikId");
+            vestService.create(vr, autorId);
             res.status(201);
             return gson.toJson("Vest uspesno kreirana");
         });
 
-        post("/api/vesti/:id/like", (req, res) -> {
+        // IZMENA VESTI
+        put("/api/vesti/:id", (req, res) -> {
+            VestRequest vr = gson.fromJson(req.body(), VestRequest.class);
             int id = Integer.parseInt(req.params(":id"));
-            vestService.likeVest(id);
-            return gson.toJson("Vest uspesno lajkovana");
+            vestService.update(id, vr);
+            return gson.toJson("Vest uspesno izmenjena");
         });
 
-        post("/api/vesti/:id/dislike", (req, res) -> {
+        // BRISANJE VESTI
+        delete("/api/vesti/:id", (req, res) -> {
             int id = Integer.parseInt(req.params(":id"));
+            vestService.delete(id);
+            return gson.toJson("Vest uspesno obrisana");
+        });
+
+        // ==========================================
+        // REAKCIJE (LAJK / DISLAJK SA KONTROLOM SESIJE)
+        // ==========================================
+
+        post("/api/vesti/:id/like", (req, res) -> { 
+            int id = Integer.parseInt(req.params(":id"));
+            var session = req.session(true);
+            String sessionKey = "voted_vest_" + id;
+
+            if (session.attribute(sessionKey) != null) {
+                throw new RuntimeException("Vec ste dali svoj glas za ovu vest!");
+            }
+
+            vestService.likeVest(id);
+            session.attribute(sessionKey, "LIKE");
+            return gson.toJson("Vest uspesno lajkovana"); 
+        });
+
+        post("/api/vesti/:id/dislike", (req, res) -> { 
+            int id = Integer.parseInt(req.params(":id"));
+            var session = req.session(true);
+            String sessionKey = "voted_vest_" + id;
+
+            if (session.attribute(sessionKey) != null) {
+                throw new RuntimeException("Vec ste dali svoj glas za ovu vest!");
+            }
+
             vestService.dislikeVest(id);
-            return gson.toJson("Vest uspesno dislajkovana");
+            session.attribute(sessionKey, "DISLIKE");
+            return gson.toJson("Vest uspesno dislajkovana"); 
         });
     }
 }

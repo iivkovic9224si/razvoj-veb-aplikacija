@@ -14,6 +14,7 @@ public class KomentarController {
             try {
                 int vestId = Integer.parseInt(req.params(":id"));
                 int page = req.queryParams("page") != null ? Integer.parseInt(req.queryParams("page")) : 1;
+                // Vraća PagedResponse sa podacima i brojem strana
                 return gson.toJson(komentarService.getByVest(vestId, page));
             } catch (Exception e) {
                 res.status(400);
