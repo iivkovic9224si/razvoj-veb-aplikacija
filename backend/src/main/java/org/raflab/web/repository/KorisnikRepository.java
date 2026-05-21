@@ -9,15 +9,24 @@ import java.util.List;
 public class KorisnikRepository {
 
     public Korisnik findKorisnik(String email, String lozinka) {
+        // DODAJ OVE DVE LINIJE ZA DEBUG:
+        System.out.println("Trazim email: " + email);
+        System.out.println("Trazim hash: " + lozinka);
+
         String upit = "SELECT * FROM korisnici WHERE email = ? AND lozinka = ? AND status = 'AKTIVAN'";
         try (Connection con = DatabaseConnection.getConnection();
              PreparedStatement st = con.prepareStatement(upit)) {
+
             st.setString(1, email);
             st.setString(2, lozinka);
+
             try (ResultSet rs = st.executeQuery()) {
                 if (rs.next()) {
+                    System.out.println("Korisnik PRONADJEN u bazi!"); // DODAJ OVO
                     return new Korisnik(rs.getInt("id"), rs.getString("email"), rs.getString("ime"),
                             rs.getString("prezime"), rs.getString("tip"), rs.getString("status"), null);
+                } else {
+                    System.out.println("Korisnik NIJE pronadjen. Proveri bazu!"); // DODAJ OVO
                 }
             }
         } catch (SQLException e) { e.printStackTrace(); }
