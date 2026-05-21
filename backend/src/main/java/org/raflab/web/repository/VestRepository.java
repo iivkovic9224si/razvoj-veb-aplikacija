@@ -65,13 +65,32 @@ public class VestRepository {
         return 0;
     }
 
-    public List<Vest> findMostReadLast30Days() {
+    // NOVO: Top 3 po reakcijama (lajkovi + dislajkovi)
+    public List<Vest> findTop3ByReactions() {
         List<Vest> vesti = new ArrayList<>();
-        String upit = "SELECT * FROM vesti WHERE vreme_kreiranja > NOW() - INTERVAL 30 DAY ORDER BY broj_poseta DESC LIMIT 10";
+        String upit = "SELECT * FROM vesti ORDER BY (broj_lajkova + broj_dislajkova) DESC LIMIT 3";
         try (Connection con = DatabaseConnection.getConnection();
              Statement st = con.createStatement();
              ResultSet rs = st.executeQuery(upit)) {
             while (rs.next()) vesti.add(mapResultSetToVest(rs));
+        } catch (SQLException e) { e.printStackTrace(); }
+        return vesti;
+    }
+
+    // NOVO: Pročitaj još (Vesti sa barem jednim zajedničkim tagom)
+    public List<Vest> findRelatedByTags(int vestId) {
+        List<Vest> vesti = new ArrayList<>();
+        String upit = "SELECT DISTINCT v.* FROM vesti v " +
+                "JOIN vest_tag vt ON v.id = vt.vest_id " +
+                "WHERE vt.tag_id IN (SELECT tag_id FROM vest_tag WHERE vest_id = ?) " +
+                "AND v.id != ? ORDER BY v.vreme_kreiranja DESC LIMIT 3";
+        try (Connection con = DatabaseConnection.getConnection();
+             PreparedStatement st = con.prepareStatement(upit)) {
+            st.setInt(1, vestId);
+            st.setInt(2, vestId);
+            try (ResultSet rs = st.executeQuery()) {
+                while (rs.next()) vesti.add(mapResultSetToVest(rs));
+            }
         } catch (SQLException e) { e.printStackTrace(); }
         return vesti;
     }
@@ -146,17 +165,14 @@ public class VestRepository {
         try (Connection con = DatabaseConnection.getConnection()) {
             con.setAutoCommit(false);
             try {
-                // 1. Obriši komentare vesti
                 try (PreparedStatement st = con.prepareStatement("DELETE FROM komentari WHERE vest_id = ?")) {
                     st.setInt(1, id);
                     st.executeUpdate();
                 }
-                // 2. Obriši veze sa tagovima
                 try (PreparedStatement st = con.prepareStatement("DELETE FROM vest_tag WHERE vest_id = ?")) {
                     st.setInt(1, id);
                     st.executeUpdate();
                 }
-                // 3. Obriši samu vest
                 try (PreparedStatement st = con.prepareStatement("DELETE FROM vesti WHERE id = ?")) {
                     st.setInt(1, id);
                     st.executeUpdate();
@@ -198,45 +214,15 @@ public class VestRepository {
         );
     }
 
-    public List<Vest> findBySearchPaginated(String query, int offset, int limit) {
-        List<Vest> vesti = new ArrayList<>();
-        String upit = "SELECT * FROM vesti WHERE naslov LIKE ? OR tekst LIKE ? ORDER BY vreme_kreiranja DESC LIMIT ? OFFSET ?";
-        try (Connection con = DatabaseConnection.getConnection();
-             PreparedStatement st = con.prepareStatement(upit)) {
-            st.setString(1, "%" + query + "%");
-            st.setString(2, "%" + query + "%");
-            st.setInt(3, limit);
-            st.setInt(4, offset);
-            try (ResultSet rs = st.executeQuery()) {
-                while (rs.next()) {
-                    vesti.add(new Vest(rs.getInt("id"), rs.getString("naslov"), rs.getString("tekst"),
-                            rs.getTimestamp("vreme_kreiranja"), rs.getInt("broj_poseta"),
-                            rs.getInt("broj_lajkova"), rs.getInt("broj_dislajkova"),
-                            rs.getInt("autor_id"), rs.getInt("kategorija_id")));
-                }
-            }
-        } catch (SQLException e) { e.printStackTrace(); }
-        return vesti;
-    }
-
     public List<Vest> findMostReadPaginated(int offset, int limit) {
         List<Vest> vesti = new ArrayList<>();
-        // Ovde ide onaj SQL upit sa INTERVAL 30 DAY koji meri popularnost
         String upit = "SELECT * FROM vesti WHERE vreme_kreiranja >= NOW() - INTERVAL 30 DAY ORDER BY broj_poseta DESC LIMIT ? OFFSET ?";
         try (Connection con = DatabaseConnection.getConnection();
              PreparedStatement st = con.prepareStatement(upit)) {
-
-            // Ovde idu samo limit i offset jer upit nema druge parametre!
             st.setInt(1, limit);
             st.setInt(2, offset);
-
             try (ResultSet rs = st.executeQuery()) {
-                while (rs.next()) {
-                    vesti.add(new Vest(rs.getInt("id"), rs.getString("naslov"), rs.getString("tekst"),
-                            rs.getTimestamp("vreme_kreiranja"), rs.getInt("broj_poseta"),
-                            rs.getInt("broj_lajkova"), rs.getInt("broj_dislajkova"),
-                            rs.getInt("autor_id"), rs.getInt("kategorija_id")));
-                }
+                while (rs.next()) vesti.add(mapResultSetToVest(rs));
             }
         } catch (SQLException e) { e.printStackTrace(); }
         return vesti;
@@ -265,14 +251,13 @@ public class VestRepository {
         } catch (SQLException e) { e.printStackTrace(); }
         return "Nepoznati Autor";
     }
+
     public int countMostReadLast30Days() {
         String upit = "SELECT COUNT(*) FROM vesti WHERE vreme_kreiranja >= NOW() - INTERVAL 30 DAY";
         try (Connection con = DatabaseConnection.getConnection();
              Statement st = con.createStatement();
              ResultSet rs = st.executeQuery(upit)) {
-            if (rs.next()) {
-                return rs.getInt(1);
-            }
+            if (rs.next()) return rs.getInt(1);
         } catch (SQLException e) { e.printStackTrace(); }
         return 0;
     }
