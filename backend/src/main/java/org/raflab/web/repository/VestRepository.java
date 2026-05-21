@@ -179,11 +179,15 @@ public class VestRepository {
 
     public List<Vest> findMostReadPaginated(int offset, int limit) {
         List<Vest> vesti = new ArrayList<>();
-        String upit = "SELECT * FROM vesti ORDER BY broj_poseta DESC LIMIT ? OFFSET ?";
+        // Ovde ide onaj SQL upit sa INTERVAL 30 DAY koji meri popularnost
+        String upit = "SELECT * FROM vesti WHERE vreme_kreiranja >= NOW() - INTERVAL 30 DAY ORDER BY broj_poseta DESC LIMIT ? OFFSET ?";
         try (Connection con = DatabaseConnection.getConnection();
              PreparedStatement st = con.prepareStatement(upit)) {
+
+            // Ovde idu samo limit i offset jer upit nema druge parametre!
             st.setInt(1, limit);
             st.setInt(2, offset);
+
             try (ResultSet rs = st.executeQuery()) {
                 while (rs.next()) {
                     vesti.add(new Vest(rs.getInt("id"), rs.getString("naslov"), rs.getString("tekst"),
