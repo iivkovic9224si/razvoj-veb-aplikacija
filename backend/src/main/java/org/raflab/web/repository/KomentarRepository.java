@@ -45,11 +45,16 @@ public class KomentarRepository {
         String upit = "INSERT INTO komentari (autor, tekst, vest_id, vreme_kreiranja) VALUES (?, ?, ?, NOW())";
         try (Connection con = DatabaseConnection.getConnection();
              PreparedStatement st = con.prepareStatement(upit)) {
+
             st.setString(1, k.getAutor());
             st.setString(2, k.getTekst());
             st.setInt(3, k.getVestId());
+
             st.executeUpdate();
-        } catch (SQLException e) { e.printStackTrace(); }
+        } catch (SQLException e) {
+            // Umesto samo e.printStackTrace(), bacamo izuzetak koji kontroler može da uhvati
+            throw new RuntimeException("Greška pri dodavanju komentara: Vest sa zadatim ID-jem ne postoji.");
+        }
     }
 
     public void incrementLikes(int id) {

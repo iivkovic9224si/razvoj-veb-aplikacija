@@ -33,7 +33,7 @@ public class KorisnikService {
         Korisnik k = korisnikRepository.findById(id);
         if (k == null) throw new RuntimeException("Korisnik ne postoji");
 
-        String noviStatus = k.getStatus().equals("AKTIVAN") ? "DEAKTIVIRAN" : "AKTIVAN";
+        String noviStatus = k.getStatus().equals("AKTIVAN") ? "NEAKTIVAN" : "AKTIVAN";
         korisnikRepository.updateStatus(id, noviStatus);
     }
 
