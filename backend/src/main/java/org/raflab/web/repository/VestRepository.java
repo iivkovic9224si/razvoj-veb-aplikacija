@@ -8,55 +8,76 @@ import java.util.List;
 
 public class VestRepository {
 
-    public List<Vest> findAllPaginated(int offset, int limit) {
+    public List<Vest> findFilteredPaginated(Integer kategorijaId, String tag, String search, int offset, int limit) {
         List<Vest> vesti = new ArrayList<>();
-        String upit = "SELECT * FROM vesti ORDER BY vreme_kreiranja DESC LIMIT ? OFFSET ?";
+        StringBuilder upit = new StringBuilder("SELECT DISTINCT v.* FROM vesti v ");
+        if (tag != null) upit.append("JOIN vest_tag vt ON v.id = vt.vest_id JOIN tagovi t ON vt.tag_id = t.id ");
+
+        upit.append("WHERE 1=1 ");
+        if (kategorijaId != null) upit.append("AND v.kategorija_id = ? ");
+        if (tag != null) upit.append("AND t.kljucna_rec = ? ");
+        if (search != null) upit.append("AND (v.naslov LIKE ? OR v.tekst LIKE ?) ");
+
+        upit.append("ORDER BY v.vreme_kreiranja DESC LIMIT ? OFFSET ?");
+
         try (Connection con = DatabaseConnection.getConnection();
-             PreparedStatement st = con.prepareStatement(upit)) {
-            st.setInt(1, limit);
-            st.setInt(2, offset);
+             PreparedStatement st = con.prepareStatement(upit.toString())) {
+            int i = 1;
+            if (kategorijaId != null) st.setInt(i++, kategorijaId);
+            if (tag != null) st.setString(i++, tag);
+            if (search != null) {
+                String p = "%" + search + "%";
+                st.setString(i++, p);
+                st.setString(i++, p);
+            }
+            st.setInt(i++, limit);
+            st.setInt(i++, offset);
+
             try (ResultSet rs = st.executeQuery()) {
-                while (rs.next()) {
-                    vesti.add(mapResultSetToVest(rs));
-                }
+                while (rs.next()) vesti.add(mapResultSetToVest(rs));
             }
         } catch (SQLException e) { e.printStackTrace(); }
         return vesti;
     }
 
-    public List<Vest> search(String query, int offset, int limit) {
-        List<Vest> vesti = new ArrayList<>();
-        String upit = "SELECT * FROM vesti WHERE naslov LIKE ? OR tekst LIKE ? ORDER BY vreme_kreiranja DESC LIMIT ? OFFSET ?";
+    public int countFiltered(Integer kategorijaId, String tag, String search) {
+        StringBuilder upit = new StringBuilder("SELECT COUNT(DISTINCT v.id) FROM vesti v ");
+        if (tag != null) upit.append("JOIN vest_tag vt ON v.id = vt.vest_id JOIN tagovi t ON vt.tag_id = t.id ");
+        upit.append("WHERE 1=1 ");
+        if (kategorijaId != null) upit.append("AND v.kategorija_id = ? ");
+        if (tag != null) upit.append("AND t.kljucna_rec = ? ");
+        if (search != null) upit.append("AND (v.naslov LIKE ? OR v.tekst LIKE ?) ");
+
         try (Connection con = DatabaseConnection.getConnection();
-             PreparedStatement st = con.prepareStatement(upit)) {
-            String searchPattern = "%" + query + "%";
-            st.setString(1, searchPattern);
-            st.setString(2, searchPattern);
-            st.setInt(3, limit);
-            st.setInt(4, offset);
+             PreparedStatement st = con.prepareStatement(upit.toString())) {
+            int i = 1;
+            if (kategorijaId != null) st.setInt(i++, kategorijaId);
+            if (tag != null) st.setString(i++, tag);
+            if (search != null) {
+                String p = "%" + search + "%";
+                st.setString(i++, p);
+                st.setString(i++, p);
+            }
             try (ResultSet rs = st.executeQuery()) {
-                while (rs.next()) {
-                    vesti.add(mapResultSetToVest(rs));
-                }
+                if (rs.next()) return rs.getInt(1);
             }
         } catch (SQLException e) { e.printStackTrace(); }
-        return vesti;
+        return 0;
     }
 
-    public Vest findById(int id) {
-        String upit = "SELECT * FROM vesti WHERE id = ?";
+    public List<Vest> findMostReadLast30Days() {
+        List<Vest> vesti = new ArrayList<>();
+        String upit = "SELECT * FROM vesti WHERE vreme_kreiranja > NOW() - INTERVAL 30 DAY ORDER BY broj_poseta DESC LIMIT 10";
         try (Connection con = DatabaseConnection.getConnection();
-             PreparedStatement st = con.prepareStatement(upit)) {
-            st.setInt(1, id);
-            try (ResultSet rs = st.executeQuery()) {
-                if (rs.next()) return mapResultSetToVest(rs);
-            }
+             Statement st = con.createStatement();
+             ResultSet rs = st.executeQuery(upit)) {
+            while (rs.next()) vesti.add(mapResultSetToVest(rs));
         } catch (SQLException e) { e.printStackTrace(); }
-        return null;
+        return vesti;
     }
 
     public void create(Vest v, List<String> tagovi) {
-        String upitVest = "INSERT INTO vesti (naslov, tekst, autor_id, kategorija_id) VALUES (?, ?, ?, ?)";
+        String upitVest = "INSERT INTO vesti (naslov, tekst, autor_id, kategorija_id, vreme_kreiranja) VALUES (?, ?, ?, ?, NOW())";
         try (Connection con = DatabaseConnection.getConnection()) {
             con.setAutoCommit(false);
             try (PreparedStatement st = con.prepareStatement(upitVest, Statement.RETURN_GENERATED_KEYS)) {
@@ -66,10 +87,7 @@ public class VestRepository {
                 st.setInt(4, v.getKategorijaId());
                 st.executeUpdate();
                 ResultSet rs = st.getGeneratedKeys();
-                if (rs.next()) {
-                    int vestId = rs.getInt(1);
-                    insertTagsForVest(con, vestId, tagovi);
-                }
+                if (rs.next()) insertTagsForVest(con, rs.getInt(1), tagovi);
                 con.commit();
             } catch (SQLException e) { con.rollback(); throw e; }
         } catch (SQLException e) { e.printStackTrace(); }
@@ -85,20 +103,18 @@ public class VestRepository {
                 st.setInt(3, v.getKategorijaId());
                 st.setInt(4, v.getId());
                 st.executeUpdate();
-
-                // Osvežavanje tagova: obriši stare veze pa dodaj nove
                 try (PreparedStatement del = con.prepareStatement("DELETE FROM vest_tag WHERE vest_id = ?")) {
                     del.setInt(1, v.getId());
                     del.executeUpdate();
                 }
                 insertTagsForVest(con, v.getId(), noviTagovi);
-
                 con.commit();
             } catch (SQLException e) { con.rollback(); throw e; }
         } catch (SQLException e) { e.printStackTrace(); }
     }
 
     private void insertTagsForVest(Connection con, int vestId, List<String> tagovi) throws SQLException {
+        if (tagovi == null) return;
         String upitTag = "INSERT IGNORE INTO tagovi (kljucna_rec) VALUES (?)";
         String upitVeza = "INSERT INTO vest_tag (vest_id, tag_id) SELECT ?, id FROM tagovi WHERE kljucna_rec = ?";
         for (String tag : tagovi) {
@@ -114,12 +130,42 @@ public class VestRepository {
         }
     }
 
-    public void delete(int id) {
-        String upit = "DELETE FROM vesti WHERE id = ?";
+    public Vest findById(int id) {
+        String upit = "SELECT * FROM vesti WHERE id = ?";
         try (Connection con = DatabaseConnection.getConnection();
              PreparedStatement st = con.prepareStatement(upit)) {
             st.setInt(1, id);
-            st.executeUpdate();
+            try (ResultSet rs = st.executeQuery()) {
+                if (rs.next()) return mapResultSetToVest(rs);
+            }
+        } catch (SQLException e) { e.printStackTrace(); }
+        return null;
+    }
+
+    public void delete(int id) {
+        try (Connection con = DatabaseConnection.getConnection()) {
+            con.setAutoCommit(false);
+            try {
+                // 1. Obriši komentare vesti
+                try (PreparedStatement st = con.prepareStatement("DELETE FROM komentari WHERE vest_id = ?")) {
+                    st.setInt(1, id);
+                    st.executeUpdate();
+                }
+                // 2. Obriši veze sa tagovima
+                try (PreparedStatement st = con.prepareStatement("DELETE FROM vest_tag WHERE vest_id = ?")) {
+                    st.setInt(1, id);
+                    st.executeUpdate();
+                }
+                // 3. Obriši samu vest
+                try (PreparedStatement st = con.prepareStatement("DELETE FROM vesti WHERE id = ?")) {
+                    st.setInt(1, id);
+                    st.executeUpdate();
+                }
+                con.commit();
+            } catch (SQLException e) {
+                con.rollback();
+                throw e;
+            }
         } catch (SQLException e) { e.printStackTrace(); }
     }
 

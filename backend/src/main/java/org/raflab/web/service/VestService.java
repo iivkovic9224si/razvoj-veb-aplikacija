@@ -2,6 +2,7 @@ package org.raflab.web.service;
 
 import org.raflab.web.dto.request.VestRequest;
 import org.raflab.web.dto.response.VestResponse;
+import org.raflab.web.dto.response.PagedResponse;
 import org.raflab.web.model.Vest;
 import org.raflab.web.repository.VestRepository;
 import org.raflab.web.repository.TagRepository;
@@ -12,15 +13,21 @@ public class VestService {
     private final VestRepository vestRepository = new VestRepository();
     private final TagRepository tagRepository = new TagRepository();
 
-    public List<VestResponse> getAll(int page) {
-        int offset = (page - 1) * 10;
-        return vestRepository.findAllPaginated(offset, 10).stream()
+    public PagedResponse<VestResponse> getFiltered(Integer katId, String tag, String search, int page) {
+        int limit = 10;
+        int offset = (Math.max(1, page) - 1) * limit;
+
+        List<VestResponse> podaci = vestRepository.findFilteredPaginated(katId, tag, search, offset, limit).stream()
                 .map(this::mapToResponse).collect(Collectors.toList());
+
+        int total = vestRepository.countFiltered(katId, tag, search);
+        int totalPages = (int) Math.ceil((double) total / limit);
+
+        return new PagedResponse<>(podaci, totalPages);
     }
 
-    public List<VestResponse> search(String query, int page) {
-        int offset = (page - 1) * 10;
-        return vestRepository.search(query, offset, 10).stream()
+    public List<VestResponse> getMostRead() {
+        return vestRepository.findMostReadLast30Days().stream()
                 .map(this::mapToResponse).collect(Collectors.toList());
     }
 
@@ -47,13 +54,14 @@ public class VestService {
         vestRepository.update(v, req.getTagovi());
     }
 
-    public void delete(int id) {
-        vestRepository.delete(id);
-    }
+    public void delete(int id) { vestRepository.delete(id); }
+    public void likeVest(int id) { vestRepository.incrementLikes(id); }
+    public void dislikeVest(int id) { vestRepository.incrementDislikes(id); }
 
     private void validate(VestRequest req) {
         if (req.getNaslov() == null || req.getNaslov().trim().isEmpty()) throw new RuntimeException("Naslov je obavezan!");
         if (req.getTekst() == null || req.getTekst().trim().isEmpty()) throw new RuntimeException("Tekst je obavezan!");
+        if (req.getKategorijaId() <= 0) throw new RuntimeException("Kategorija je obavezna!");
     }
 
     private VestResponse mapToResponse(Vest v) {
@@ -69,7 +77,4 @@ public class VestService {
                 .map(t -> t.getKljucnaRec()).collect(Collectors.toList()));
         return res;
     }
-
-    public void likeVest(int id) { vestRepository.incrementLikes(id); }
-    public void dislikeVest(int id) { vestRepository.incrementDislikes(id); }
 }

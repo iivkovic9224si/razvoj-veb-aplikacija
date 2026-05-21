@@ -23,26 +23,18 @@ public class KorisnikRepository {
     }
 
     public void update(Korisnik k) {
-        String upit = "UPDATE korisnici SET email = ?, ime = ?, prezime = ?, tip = ? WHERE id = ?";
+        // SQL koji uključuje i lozinku u update
+        String upit = "UPDATE korisnici SET email = ?, ime = ?, prezime = ?, tip = ?, lozinka = ? WHERE id = ?";
         try (Connection con = DatabaseConnection.getConnection();
              PreparedStatement st = con.prepareStatement(upit)) {
             st.setString(1, k.getEmail());
             st.setString(2, k.getIme());
             st.setString(3, k.getPrezime());
             st.setString(4, k.getTip());
-            st.setInt(5, k.getId());
+            st.setString(5, k.getLozinka());
+            st.setInt(6, k.getId());
             st.executeUpdate();
         } catch (SQLException e) { e.printStackTrace(); throw new RuntimeException("Greška pri izmeni korisnika."); }
-    }
-
-    public void updateStatus(int id, String status) {
-        String upit = "UPDATE korisnici SET status = ? WHERE id = ?";
-        try (Connection con = DatabaseConnection.getConnection();
-             PreparedStatement st = con.prepareStatement(upit)) {
-            st.setString(1, status);
-            st.setInt(2, id);
-            st.executeUpdate();
-        } catch (SQLException e) { e.printStackTrace(); }
     }
 
     public Korisnik findById(int id) {
@@ -66,22 +58,9 @@ public class KorisnikRepository {
              PreparedStatement st = con.prepareStatement(upit)) {
             st.setString(1, email);
             try (ResultSet rs = st.executeQuery()) {
-                if (rs.next()) return new Korisnik(rs.getInt("id"), rs.getString("email"), null, null, null, null, null);
-            }
-        } catch (SQLException e) { e.printStackTrace(); }
-        return null;
-    }
-
-    public Korisnik findKorisnik(String email, String lozinka) {
-        String upit = "SELECT * FROM korisnici WHERE email = ? AND lozinka = ? AND status = 'AKTIVAN'";
-        try (Connection con = DatabaseConnection.getConnection();
-             PreparedStatement st = con.prepareStatement(upit)) {
-            st.setString(1, email);
-            st.setString(2, lozinka);
-            try (ResultSet rs = st.executeQuery()) {
                 if (rs.next()) {
                     return new Korisnik(rs.getInt("id"), rs.getString("email"), rs.getString("ime"),
-                            rs.getString("prezime"), rs.getString("tip"), rs.getString("status"), null);
+                            rs.getString("prezime"), rs.getString("tip"), rs.getString("status"), rs.getString("lozinka"));
                 }
             }
         } catch (SQLException e) { e.printStackTrace(); }
@@ -113,5 +92,15 @@ public class KorisnikRepository {
             if (rs.next()) return rs.getInt(1);
         } catch (SQLException e) { e.printStackTrace(); }
         return 0;
+    }
+
+    public void updateStatus(int id, String status) {
+        String upit = "UPDATE korisnici SET status = ? WHERE id = ?";
+        try (Connection con = DatabaseConnection.getConnection();
+             PreparedStatement st = con.prepareStatement(upit)) {
+            st.setString(1, status);
+            st.setInt(2, id);
+            st.executeUpdate();
+        } catch (SQLException e) { e.printStackTrace(); }
     }
 }
