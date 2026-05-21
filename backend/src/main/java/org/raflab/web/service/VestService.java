@@ -33,13 +33,16 @@ public class VestService {
         int limit = 10;
         int offset = (Math.max(1, page) - 1) * limit;
 
-        // Koristi se findMostReadPaginated sa upitom koji filtrira poslednjih 30 dana
-        List<VestResponse> podaci = vestRepository.findMostReadPaginated(offset, limit).stream()
+        // 1. Povlačimo paginiranu listu najčitanijih vesti iz baze (koristi mapResultSetToVest interno)
+        List<Vest> entitetiIzBaze = vestRepository.findMostReadPaginated(offset, limit);
+
+        // 2. Mapiramo bazične modele u VestResponse (gde se pune imena autora i kategorije)
+        List<VestResponse> podaci = entitetiIzBaze.stream()
                 .map(this::mapToResponse)
                 .collect(Collectors.toList());
 
-        // Izvlačimo ukupan broj najčitanijih vesti u poslednjih 30 dana radi tačne paginacije
-        int total = vestRepository.countMostReadLast30Days(); 
+        // 3. Brojimo ukupan broj zapisa pomoću nove metode iz repozitorijuma radi tačne paginacije
+        int total = vestRepository.countMostReadLast30Days();
         int totalPages = (int) Math.ceil((double) total / limit);
 
         return new PagedResponse<>(podaci, totalPages);

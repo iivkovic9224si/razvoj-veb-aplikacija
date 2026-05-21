@@ -265,4 +265,15 @@ public class VestRepository {
         } catch (SQLException e) { e.printStackTrace(); }
         return "Nepoznati Autor";
     }
+    public int countMostReadLast30Days() {
+        String upit = "SELECT COUNT(*) FROM vesti WHERE vreme_kreiranja >= NOW() - INTERVAL 30 DAY";
+        try (Connection con = DatabaseConnection.getConnection();
+             Statement st = con.createStatement();
+             ResultSet rs = st.executeQuery(upit)) {
+            if (rs.next()) {
+                return rs.getInt(1);
+            }
+        } catch (SQLException e) { e.printStackTrace(); }
+        return 0;
+    }
 }
