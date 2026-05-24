@@ -1,57 +1,58 @@
 package org.raflab.web;
 
-import com.google.gson.Gson;
 import org.raflab.web.auth.JwtAuthorizationFilter;
 import org.raflab.web.controller.*;
+
 import static spark.Spark.*;
 
 public class MainApplication {
 
     public static void main(String[] args) {
-        // 1. Postavljanje porta
         port(4567);
 
-        // 2. Globalni Exception Handler za VALIDACIJU
-        // Ovo hvata svaki "throw new RuntimeException" iz tvojih servisa
-        exception(RuntimeException.class, (e, req, res) -> {
-            res.status(400); // Bad Request
-            res.type("application/json");
-            res.body("{\"error\": \"" + e.getMessage() + "\"}");
-            System.err.println("Validation Error: " + e.getMessage());
-        });
-
-        // 3. CORS podešavanja (Neophodno za React)
+        // CORS preflight zahtev iz React-a
         options("/*", (request, response) -> {
-            String accessControlRequestHeaders = request.headers("Access-Control-Request-Headers");
-            if (accessControlRequestHeaders != null) {
-                response.header("Access-Control-Allow-Headers", accessControlRequestHeaders);
-            }
-            String accessControlRequestMethod = request.requestMethod();
-            if (accessControlRequestMethod != null) {
-                response.header("Access-Control-Allow-Methods", accessControlRequestMethod);
-            }
-            return "OK";
+            response.header("Access-Control-Allow-Origin", "http://localhost:5173");
+            response.header("Access-Control-Allow-Credentials", "true");
+            response.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
+            response.header("Access-Control-Allow-Headers", "Content-Type, Authorization, Accept");
+
+            response.status(200);
+            return "";
         });
 
-        // 4. Globalni filter za zaglavlja
+        // CORS header-i za sve ostale zahteve
         before("/*", (request, response) -> {
             response.header("Access-Control-Allow-Origin", "http://localhost:5173");
+            response.header("Access-Control-Allow-Credentials", "true");
             response.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
             response.header("Access-Control-Allow-Headers", "Content-Type, Authorization, Accept");
             response.type("application/json");
         });
 
-        // 5. JWT Autorizacija (Tvoj zaštitni zid)
+        // Ako je OPTIONS zahtev, ne puštamo ga dalje kroz aplikaciju
+        before("/*", (request, response) -> {
+            if ("OPTIONS".equalsIgnoreCase(request.requestMethod())) {
+                halt(200, "");
+            }
+        });
+
+        // JWT zaštita
         before("/*", JwtAuthorizationFilter.handleAuth);
 
-        // 6. Registracija svih 5 kontrolera
+        exception(RuntimeException.class, (e, req, res) -> {
+            res.status(400);
+            res.type("application/json");
+            res.body("{\"error\": \"" + e.getMessage() + "\"}");
+            System.err.println("Validation Error: " + e.getMessage());
+        });
+
         new KorisnikController().registerRoutes();
         new VestController().registerRoutes();
         new KategorijaController().registerRoutes();
         new KomentarController().registerRoutes();
         new TagController().registerRoutes();
 
-        // 7. Test rute
         get("/api/hello", (req, res) -> "{\"poruka\": \"Sistem je online i validacija je aktivna!\"}");
 
         System.out.println("=================================================");

@@ -65,6 +65,20 @@ public class KomentarRepository {
         executeSimpleUpdate("UPDATE komentari SET broj_dislajkova = broj_dislajkova + 1 WHERE id = ?", id);
     }
 
+    public void decrementLikes(int id) {
+        executeSimpleUpdate(
+                "UPDATE komentari SET broj_lajkova = GREATEST(broj_lajkova - 1, 0) WHERE id = ?",
+                id
+        );
+    }
+
+    public void decrementDislikes(int id) {
+        executeSimpleUpdate(
+                "UPDATE komentari SET broj_dislajkova = GREATEST(broj_dislajkova - 1, 0) WHERE id = ?",
+                id
+        );
+    }
+
     private void executeSimpleUpdate(String upit, int id) {
         try (Connection con = DatabaseConnection.getConnection();
              PreparedStatement st = con.prepareStatement(upit)) {

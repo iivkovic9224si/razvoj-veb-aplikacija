@@ -1,122 +1,86 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
-import heroImg from './assets/hero.png'
-import './App.css'
+import { Navigate, Route, Routes } from "react-router-dom";
 
-function App() {
-  const [count, setCount] = useState(0)
+import ProtectedRoute from "./components/ProtectedRoute.jsx";
+import AdminRoute from "./components/AdminRoute.jsx";
 
-  return (
-    <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
-        </div>
-        <div>
-          <h1>Get started</h1>
-          <p>
-            Edit <code>src/App.jsx</code> and save to test <code>HMR</code>
-          </p>
-        </div>
-        <button
-          type="button"
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
-        >
-          Count is {count}
-        </button>
-      </section>
+import PublicLayout from "./pages/public/PublicLayout.jsx";
+import HomePage from "./pages/public/HomePage.jsx";
+import MostReadPage from "./pages/public/MostReadPage.jsx";
+import CategoryPage from "./pages/public/CategoryPage.jsx";
+import TagPage from "./pages/public/TagPage.jsx";
+import SearchPage from "./pages/public/SearchPage.jsx";
+import NewsDetailsPage from "./pages/public/NewsDetailsPage.jsx";
 
-      <div className="ticks"></div>
+import LoginPage from "./pages/cms/LoginPage.jsx";
+import CmsLayout from "./pages/cms/CmsLayout.jsx";
+import CmsCategoriesPage from "./pages/cms/CmsCategoriesPage.jsx";
+import CategoryFormPage from "./pages/cms/CategoryFormPage.jsx";
+import CmsNewsPage from "./pages/cms/CmsNewsPage.jsx";
+import NewsFormPage from "./pages/cms/NewsFormPage.jsx";
+import CmsUsersPage from "./pages/cms/CmsUsersPage.jsx";
+import UserFormPage from "./pages/cms/UserFormPage.jsx";
 
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
-        </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
-        </div>
-      </section>
+export default function App() {
+    return (
+        <Routes>
+            <Route element={<PublicLayout />}>
+                <Route path="/" element={<HomePage />} />
+                <Route path="/najcitanije" element={<MostReadPage />} />
+                <Route path="/kategorija/:id" element={<CategoryPage />} />
+                <Route path="/tag/:tag" element={<TagPage />} />
+                <Route path="/pretraga" element={<SearchPage />} />
+                <Route path="/vest/:id" element={<NewsDetailsPage />} />
+            </Route>
 
-      <div className="ticks"></div>
-      <section id="spacer"></section>
-    </>
-  )
+            <Route path="/login" element={<LoginPage />} />
+
+            <Route
+                path="/cms"
+                element={
+                    <ProtectedRoute>
+                        <CmsLayout />
+                    </ProtectedRoute>
+                }
+            >
+                <Route index element={<Navigate to="/cms/kategorije" replace />} />
+
+                <Route path="kategorije" element={<CmsCategoriesPage />} />
+                <Route path="kategorije/nova" element={<CategoryFormPage />} />
+                <Route path="kategorije/:id/izmena" element={<CategoryFormPage />} />
+
+                <Route path="vesti" element={<CmsNewsPage />} />
+                <Route path="vesti/nova" element={<NewsFormPage />} />
+                <Route path="vesti/:id/izmena" element={<NewsFormPage />} />
+
+                <Route
+                    path="korisnici"
+                    element={
+                        <AdminRoute>
+                            <CmsUsersPage />
+                        </AdminRoute>
+                    }
+                />
+
+                <Route
+                    path="korisnici/novi"
+                    element={
+                        <AdminRoute>
+                            <UserFormPage />
+                        </AdminRoute>
+                    }
+                />
+
+                <Route
+                    path="korisnici/:id/izmena"
+                    element={
+                        <AdminRoute>
+                            <UserFormPage />
+                        </AdminRoute>
+                    }
+                />
+            </Route>
+
+            <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+    );
 }
-
-export default App

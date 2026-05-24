@@ -49,6 +49,35 @@ public class KomentarService {
         komentarRepository.create(k);
     }
 
-    public void likeComment(int id) { komentarRepository.incrementLikes(id); }
-    public void dislikeComment(int id) { komentarRepository.incrementDislikes(id); }
+    public void likeComment(int id) {
+        komentarRepository.incrementLikes(id);
+    }
+
+    public void dislikeComment(int id) {
+        komentarRepository.incrementDislikes(id);
+    }
+
+    public void changeVoteToLike(int id, String prethodniGlas) {
+        if ("LIKE".equals(prethodniGlas)) {
+            throw new RuntimeException("Već ste lajkovali ovaj komentar.");
+        }
+
+        if ("DISLIKE".equals(prethodniGlas)) {
+            komentarRepository.decrementDislikes(id);
+        }
+
+        komentarRepository.incrementLikes(id);
+    }
+
+    public void changeVoteToDislike(int id, String prethodniGlas) {
+        if ("DISLIKE".equals(prethodniGlas)) {
+            throw new RuntimeException("Već ste dislajkovali ovaj komentar.");
+        }
+
+        if ("LIKE".equals(prethodniGlas)) {
+            komentarRepository.decrementLikes(id);
+        }
+
+        komentarRepository.incrementDislikes(id);
+    }
 }

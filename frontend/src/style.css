@@ -1,0 +1,173 @@
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    background: #f5f5f5;
+    color: #222;
+}
+
+a {
+    color: #0b65c2;
+    text-decoration: none;
+}
+
+a:hover {
+    text-decoration: underline;
+}
+
+.container {
+    max-width: 1100px;
+    margin: 24px auto;
+    padding: 0 16px;
+}
+
+.navbar {
+    background: #222;
+    color: white;
+    padding: 12px 24px;
+    display: flex;
+    gap: 16px;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.navbar a {
+    color: white;
+}
+
+.navbar .spacer {
+    flex: 1;
+}
+
+.card {
+    background: white;
+    padding: 18px;
+    margin-bottom: 14px;
+    border-radius: 8px;
+    border: 1px solid #ddd;
+}
+
+.table {
+    width: 100%;
+    border-collapse: collapse;
+    background: white;
+}
+
+.table th,
+.table td {
+    border: 1px solid #ddd;
+    padding: 10px;
+    text-align: left;
+    vertical-align: top;
+}
+
+.table th {
+    background: #eee;
+}
+
+.form {
+    background: white;
+    padding: 18px;
+    border-radius: 8px;
+    border: 1px solid #ddd;
+    max-width: 650px;
+}
+
+.form label {
+    display: block;
+    margin-top: 12px;
+    margin-bottom: 5px;
+    font-weight: bold;
+}
+
+.form input,
+.form textarea,
+.form select {
+    width: 100%;
+    padding: 9px;
+    border: 1px solid #bbb;
+    border-radius: 5px;
+}
+
+.form textarea {
+    min-height: 160px;
+}
+
+button,
+.btn {
+    display: inline-block;
+    border: 0;
+    background: #0b65c2;
+    color: white;
+    padding: 9px 13px;
+    border-radius: 5px;
+    cursor: pointer;
+    margin-right: 6px;
+    margin-top: 6px;
+}
+
+button.danger {
+    background: #b00020;
+}
+
+button.secondary,
+.btn.secondary {
+    background: #555;
+}
+
+.error {
+    background: #ffe5e5;
+    color: #9b0000;
+    padding: 10px;
+    border-radius: 6px;
+    margin-bottom: 12px;
+}
+
+.success {
+    background: #e7ffe7;
+    color: #006400;
+    padding: 10px;
+    border-radius: 6px;
+    margin-bottom: 12px;
+}
+
+.pagination {
+    margin-top: 16px;
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.public-layout {
+    max-width: 1300px;
+    margin: 24px auto;
+    padding: 0 16px;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 280px;
+    gap: 20px;
+}
+
+.public-main .container {
+    margin: 0;
+    padding: 0;
+    max-width: none;
+}
+
+.public-sidebar {
+    position: sticky;
+    top: 16px;
+    align-self: start;
+}
+
+@media (max-width: 900px) {
+    .public-layout {
+        grid-template-columns: 1fr;
+    }
+
+    .public-sidebar {
+        position: static;
+    }
+}
