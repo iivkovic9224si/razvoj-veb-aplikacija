@@ -64,19 +64,65 @@ export default function UserFormPage() {
         };
     }, [id, isEdit]);
 
+    function validateForm() {
+        if (!ime.trim()) {
+            return "Ime je obavezno.";
+        }
+
+        if (!prezime.trim()) {
+            return "Prezime je obavezno.";
+        }
+
+        if (!email.trim()) {
+            return "Email je obavezan.";
+        }
+
+        const emailRegex = /^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/;
+        if (!emailRegex.test(email.trim())) {
+            return "Email nije u ispravnom formatu.";
+        }
+
+        if (!isEdit || lozinka.trim() || lozinkaPotvrda.trim()) {
+            if (!lozinka) {
+                return "Lozinka je obavezna.";
+            }
+
+            if (lozinka.length < 8) {
+                return "Lozinka mora imati barem 8 karaktera.";
+            }
+
+            if (!lozinkaPotvrda) {
+                return "Potvrda lozinke je obavezna.";
+            }
+
+            if (lozinka !== lozinkaPotvrda) {
+                return "Lozinke se ne podudaraju.";
+            }
+        }
+
+        return "";
+    }
+
     async function handleSubmit(e) {
         e.preventDefault();
         setError("");
+
+        const validationMessage = validateForm();
+        if (validationMessage) {
+            setError(validationMessage);
+            return;
+        }
+
         setSaving(true);
 
         const body = {
-            ime,
-            prezime,
-            email,
+            ime: ime.trim(),
+            prezime: prezime.trim(),
+            email: email.trim(),
             tip,
         };
 
-        if (!isEdit) {
+        if (!isEdit || lozinka) {
             body.lozinka = lozinka;
             body.lozinkaPotvrda = lozinkaPotvrda;
         }
@@ -114,20 +160,33 @@ export default function UserFormPage() {
         <div className="container">
             <h1>{isEdit ? "Izmena korisnika" : "Novi korisnik"}</h1>
 
-            <form className="form" onSubmit={handleSubmit}>
+            <form className="form" onSubmit={handleSubmit} noValidate>
                 {error && <div className="error">{error}</div>}
 
                 <label>Ime</label>
-                <input value={ime} onChange={(e) => setIme(e.target.value)} />
+                <input
+                    value={ime}
+                    onChange={(e) => setIme(e.target.value)}
+                    required
+                />
 
                 <label>Prezime</label>
-                <input value={prezime} onChange={(e) => setPrezime(e.target.value)} />
+                <input
+                    value={prezime}
+                    onChange={(e) => setPrezime(e.target.value)}
+                    required
+                />
 
                 <label>Email</label>
-                <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
+                <input
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    required
+                />
 
                 <label>Tip korisnika</label>
-                <select value={tip} onChange={(e) => setTip(e.target.value)}>
+                <select value={tip} onChange={(e) => setTip(e.target.value)} required>
                     <option value="STVARALAC_SADRZAJA">STVARALAC_SADRZAJA</option>
                     <option value="ADMINISTRATOR">ADMINISTRATOR</option>
                 </select>
@@ -139,6 +198,9 @@ export default function UserFormPage() {
                             type="password"
                             value={lozinka}
                             onChange={(e) => setLozinka(e.target.value)}
+                            required
+                            minLength={8}
+                            placeholder="Barem 8 karaktera"
                         />
 
                         <label>Potvrda lozinke</label>
@@ -146,6 +208,31 @@ export default function UserFormPage() {
                             type="password"
                             value={lozinkaPotvrda}
                             onChange={(e) => setLozinkaPotvrda(e.target.value)}
+                            required
+                            minLength={8}
+                            placeholder="Ponovi lozinku"
+                        />
+                    </>
+                )}
+
+                {isEdit && (
+                    <>
+                        <label>Nova lozinka (opciono)</label>
+                        <input
+                            type="password"
+                            value={lozinka}
+                            onChange={(e) => setLozinka(e.target.value)}
+                            minLength={8}
+                            placeholder="Popuni samo ako menjaš lozinku"
+                        />
+
+                        <label>Potvrda nove lozinke</label>
+                        <input
+                            type="password"
+                            value={lozinkaPotvrda}
+                            onChange={(e) => setLozinkaPotvrda(e.target.value)}
+                            minLength={8}
+                            placeholder="Ponovi novu lozinku"
                         />
                     </>
                 )}
@@ -154,7 +241,11 @@ export default function UserFormPage() {
                     {saving ? "Čuvanje..." : "Sačuvaj"}
                 </button>
 
-                <button type="button" className="secondary" onClick={() => navigate("/cms/korisnici")}>
+                <button
+                    type="button"
+                    className="secondary"
+                    onClick={() => navigate("/cms/korisnici")}
+                >
                     Nazad
                 </button>
             </form>
