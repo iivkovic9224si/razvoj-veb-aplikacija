@@ -9,11 +9,9 @@ import java.util.Date;
 
 public class AuthService {
 
-    // Ovaj kljuc mora biti tajna i koristi se i za potpisivanje i za verifikaciju tokena
     public static final String SECRET_KEY = "raf_veb_aplikacije_tajni_kljuc_2026";
 
     public static String login(String email, String plainLozinka) {
-        // 1. Hešujemo lozinku koja je stigla sa frontenda da bismo je uporedili sa onom u bazi
         String hashedLozinka = HashUtils.sha256(plainLozinka);
 
         String upit = "SELECT id, tip, status FROM korisnici WHERE email = ? AND lozinka = ?";
@@ -28,7 +26,6 @@ public class AuthService {
                 if (rs.next()) {
                     String status = rs.getString("status");
 
-                    // Ako je korisnik deaktiviran, ne dozvoljavamo login
                     if ("NEAKTIVAN".equals(status)) {
                         return "DEAKTIVIRAN";
                     }
@@ -36,7 +33,6 @@ public class AuthService {
                     int id = rs.getInt("id");
                     String tip = rs.getString("tip");
 
-                    // 2. Korisnik je uspešno uneo podatke -> Generišemo JWT Token
                     Algorithm algorithm = Algorithm.HMAC256(SECRET_KEY);
 
                     return JWT.create()
@@ -45,13 +41,13 @@ public class AuthService {
                             .withClaim("tip", tip) // ADMINISTRATOR ili STVARALAC_SADRZAJA
                             .withClaim("status", status)
                             .withIssuedAt(new Date())
-                            .withExpiresAt(new Date(System.currentTimeMillis() + 2 * 60 * 60 * 1000)) // Traje 2 sata
+                            .withExpiresAt(new Date(System.currentTimeMillis() + 2 * 60 * 60 * 1000))
                             .sign(algorithm);
                 }
             }
         } catch (SQLException e) {
             e.printStackTrace();
         }
-        return null; // Pogrešan email ili lozinka
+        return null;
     }
 }

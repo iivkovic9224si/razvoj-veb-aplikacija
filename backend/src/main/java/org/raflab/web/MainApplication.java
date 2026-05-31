@@ -10,7 +10,6 @@ public class MainApplication {
     public static void main(String[] args) {
         port(4567);
 
-        // CORS preflight zahtev iz React-a
         options("/*", (request, response) -> {
             response.header("Access-Control-Allow-Origin", "http://localhost:5173");
             response.header("Access-Control-Allow-Credentials", "true");
@@ -21,7 +20,6 @@ public class MainApplication {
             return "";
         });
 
-        // CORS header-i za sve ostale zahteve
         before("/*", (request, response) -> {
             response.header("Access-Control-Allow-Origin", "http://localhost:5173");
             response.header("Access-Control-Allow-Credentials", "true");
@@ -30,14 +28,12 @@ public class MainApplication {
             response.type("application/json");
         });
 
-        // Ako je OPTIONS zahtev, ne puštamo ga dalje kroz aplikaciju
         before("/*", (request, response) -> {
             if ("OPTIONS".equalsIgnoreCase(request.requestMethod())) {
                 halt(200, "");
             }
         });
 
-        // JWT zaštita
         before("/*", JwtAuthorizationFilter.handleAuth);
 
         exception(RuntimeException.class, (e, req, res) -> {

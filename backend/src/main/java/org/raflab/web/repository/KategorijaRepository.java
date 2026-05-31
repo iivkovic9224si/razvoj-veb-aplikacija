@@ -8,7 +8,6 @@ import java.util.List;
 
 public class KategorijaRepository {
 
-    // Dodaj ovu metodu u postojeći KategorijaRepository
     public Kategorija findByName(String ime) {
         String upit = "SELECT * FROM kategorije WHERE ime = ?";
         try (Connection con = DatabaseConnection.getConnection();

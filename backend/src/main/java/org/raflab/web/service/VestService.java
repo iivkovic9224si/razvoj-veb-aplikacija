@@ -15,7 +15,6 @@ public class VestService {
     private final VestRepository vestRepository = new VestRepository();
     private final TagRepository tagRepository = new TagRepository();
 
-    // UNIVERZALNA RUTA ZA LISTANJE, PRETRAGU I FILTERE (Zadržan i spojen kod iz backend-smallStuffFixing)
     public PagedResponse<VestResponse> getFiltered(Integer katId, String tag, String search, int page) {
         int limit = 10;
         int offset = (Math.max(1, page) - 1) * limit;
@@ -30,20 +29,16 @@ public class VestService {
         return new PagedResponse<>(podaci, totalPages);
     }
 
-    // NAJČITANIJE VESTI - Prilagođeno paginaciji iz kontrolera i zahtevu od 30 dana
     public PagedResponse<VestResponse> getMostRead(int page) {
         int limit = 10;
         int offset = (Math.max(1, page) - 1) * limit;
 
-        // 1. Povlačimo paginiranu listu najčitanijih vesti iz baze (koristi mapResultSetToVest interno)
         List<Vest> entitetiIzBaze = vestRepository.findMostReadPaginated(offset, limit);
 
-        // 2. Mapiramo bazične modele u VestResponse (gde se pune imena autora i kategorije)
         List<VestResponse> podaci = entitetiIzBaze.stream()
                 .map(this::mapToResponse)
                 .collect(Collectors.toList());
 
-        // 3. Brojimo ukupan broj zapisa pomoću nove metode iz repozitorijuma radi tačne paginacije
         int total = vestRepository.countMostReadLast30Days();
         int totalPages = (int) Math.ceil((double) total / limit);
 
@@ -147,7 +142,6 @@ public class VestService {
         if (req.getKategorijaId() <= 0) throw new RuntimeException("Kategorija je obavezna!");
     }
 
-    // ISPRAVLJENO MAPIRANJE: Sada popunjava tekstualna imena koja se traže na platformi
     private VestResponse mapToResponse(Vest v) {
         VestResponse res = new VestResponse();
         res.setId(v.getId());

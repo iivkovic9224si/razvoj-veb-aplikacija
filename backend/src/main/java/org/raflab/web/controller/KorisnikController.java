@@ -10,12 +10,10 @@ public class KorisnikController {
     private final Gson gson = new Gson();
 
     public void registerRoutes() {
-        // --- JAVNE RUTE ---
 
         post("/api/login", (req, res) -> {
             try {
                 KorisnikRequest requestDto = gson.fromJson(req.body(), KorisnikRequest.class);
-                // Pozivamo AuthService za JWT
                 String token = org.raflab.web.auth.AuthService.login(requestDto.getEmail(), requestDto.getLozinka());
 
                 if (token == null) {
@@ -27,7 +25,6 @@ public class KorisnikController {
                     return gson.toJson("Greška: Vaš nalog je deaktiviran od strane administratora.");
                 }
 
-                // Ako je JWT prošao, uzimamo podatke o korisniku
                 var korisnikResponse = korisnikService.login(requestDto);
                 korisnikResponse.setJwt(token);
                 return gson.toJson(korisnikResponse);
@@ -42,7 +39,6 @@ public class KorisnikController {
         get("/api/korisnici", (req, res) -> {
             try {
                 int page = req.queryParams("page") != null ? Integer.parseInt(req.queryParams("page")) : 1;
-                // Vraća PagedResponse<KorisnikResponse> (podaci + ukupnoStranica)
                 return gson.toJson(korisnikService.findAll(page));
             } catch (Exception e) {
                 res.status(400);
@@ -72,7 +68,6 @@ public class KorisnikController {
                 res.status(201);
                 return gson.toJson("Korisnik uspešno kreiran.");
             } catch (RuntimeException e) {
-                // Ovde hvatamo poruke tipa "Email je zauzet" ili "Lozinke se ne podudaraju"
                 res.status(400);
                 return gson.toJson(e.getMessage());
             } catch (Exception e) {
