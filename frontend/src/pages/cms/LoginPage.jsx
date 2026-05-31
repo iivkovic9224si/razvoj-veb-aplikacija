@@ -4,7 +4,7 @@ import { useAuth } from "../../context/AuthContext.jsx";
 
 export default function LoginPage() {
     const [email, setEmail] = useState("admin@raf.rs");
-    const [lozinka, setLozinka] = useState("admin123");
+    const [lozinka, setLozinka] = useState("");
     const [error, setError] = useState("");
     const [loading, setLoading] = useState(false);
 
