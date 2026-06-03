@@ -52,7 +52,6 @@ public class KomentarRepository {
 
             st.executeUpdate();
         } catch (SQLException e) {
-            // Umesto samo e.printStackTrace(), bacamo izuzetak koji kontroler može da uhvati
             throw new RuntimeException("Greška pri dodavanju komentara: Vest sa zadatim ID-jem ne postoji.");
         }
     }

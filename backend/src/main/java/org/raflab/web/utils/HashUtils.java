@@ -5,11 +5,6 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
 public class HashUtils {
-
-    /**
-     * Pretvara string u SHA-256 hash.
-     * Koristi se za proveru lozinke pri logovanju i heširanje nove lozinke.
-     */
     public static String sha256(String lozinka) {
         try {
             MessageDigest digest = MessageDigest.getInstance("SHA-256");

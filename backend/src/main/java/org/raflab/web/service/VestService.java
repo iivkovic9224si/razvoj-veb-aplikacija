@@ -45,27 +45,24 @@ public class VestService {
         return new PagedResponse<>(podaci, totalPages);
     }
 
-    // POJEDINAČNA VEST - Izmenjena tako da prihvata odluku iz kontrolera/sesije da li treba uvećati brojač
     public VestResponse getByIdWithVisitLogic(int id, boolean vecPosetio) {
         if (id <= 0) throw new RuntimeException("ID vesti nije validan!");
         Vest v = vestRepository.findById(id);
         if (v == null) return null;
-        
-        // Broj poseta se uvećava samo ako korisnik u ovoj sesiji već nije otvorio tu vest
+
         if (!vecPosetio) {
             vestRepository.incrementVisitCount(id);
-            v.setBrojPoseta(v.getBrojPoseta() + 1); // Ažuriramo objekat u memoriji da odmah vrati tačan broj
+            v.setBrojPoseta(v.getBrojPoseta() + 1);
         }
         return mapToResponse(v);
     }
 
-    // Zadržana metoda getById radi kompatibilnosti ako se poziva na drugim mestima na bekendu
     public VestResponse getById(int id) {
         return getByIdWithVisitLogic(id, true);
     }
 
     public void create(VestRequest req, int autorId) {
-        validate(req); // Iskorišćena kolegina privatna metoda za validaciju
+        validate(req);
         if (autorId <= 0) throw new RuntimeException("Autor vesti nije prepoznat!");
 
         Vest v = new Vest(0, req.getNaslov(), req.getTekst(), null, 0, 0, 0, autorId, req.getKategorijaId());
@@ -152,7 +149,6 @@ public class VestService {
         res.setBrojLajkova(v.getBrojLajkova());
         res.setBrojDislajkova(v.getBrojDislajkova());
 
-        // Pozivanje metoda iz repozitorijuma kako bi se izbegao null na frontendu
         res.setKategorijaIme(vestRepository.getKategorijaIme(v.getKategorijaId()));
         res.setAutorIme(vestRepository.getAutorImePrezime(v.getAutorId()));
 

@@ -197,17 +197,14 @@ public class VestRepository {
         try (Connection con = DatabaseConnection.getConnection()) {
             con.setAutoCommit(false);
             try {
-                // 1. Obriši komentare vesti
                 try (PreparedStatement st = con.prepareStatement("DELETE FROM komentari WHERE vest_id = ?")) {
                     st.setInt(1, id);
                     st.executeUpdate();
                 }
-                // 2. Obriši veze sa tagovima
                 try (PreparedStatement st = con.prepareStatement("DELETE FROM vest_tag WHERE vest_id = ?")) {
                     st.setInt(1, id);
                     st.executeUpdate();
                 }
-                // 3. Obriši samu vest
                 try (PreparedStatement st = con.prepareStatement("DELETE FROM vesti WHERE id = ?")) {
                     st.setInt(1, id);
                     st.executeUpdate();
@@ -277,12 +274,10 @@ public class VestRepository {
 
     public List<Vest> findMostReadPaginated(int offset, int limit) {
         List<Vest> vesti = new ArrayList<>();
-        // Ovde ide onaj SQL upit sa INTERVAL 30 DAY koji meri popularnost
         String upit = "SELECT * FROM vesti WHERE vreme_kreiranja >= NOW() - INTERVAL 30 DAY ORDER BY broj_poseta DESC LIMIT ? OFFSET ?";
         try (Connection con = DatabaseConnection.getConnection();
              PreparedStatement st = con.prepareStatement(upit)) {
 
-            // Ovde idu samo limit i offset jer upit nema druge parametre!
             st.setInt(1, limit);
             st.setInt(2, offset);
 

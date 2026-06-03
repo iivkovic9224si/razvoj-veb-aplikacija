@@ -60,8 +60,7 @@ public class VestController {
         // ==========================================
         // CMS RUTE (ZAHTEVAJU JWT TOKEN - AUTORIZACIJA)
         // ==========================================
-        
-        // KREIRANJE VESTI (Ispravno uzima trenutniKorisnikId iz tokena)
+
         post("/api/vesti", (req, res) -> {
             VestRequest vr = gson.fromJson(req.body(), VestRequest.class);
             int autorId = req.attribute("trenutniKorisnikId");
@@ -70,7 +69,6 @@ public class VestController {
             return gson.toJson("Vest uspesno kreirana");
         });
 
-        // IZMENA VESTI
         put("/api/vesti/:id", (req, res) -> {
             VestRequest vr = gson.fromJson(req.body(), VestRequest.class);
             int id = Integer.parseInt(req.params(":id"));
@@ -78,7 +76,6 @@ public class VestController {
             return gson.toJson("Vest uspesno izmenjena");
         });
 
-        // BRISANJE VESTI
         delete("/api/vesti/:id", (req, res) -> {
             int id = Integer.parseInt(req.params(":id"));
             vestService.delete(id);

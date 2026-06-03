@@ -31,20 +31,15 @@ public class KomentarService {
     }
 
     public void addComment(KomentarRequest reqDto) {
-        // 1. Validacija unosa
         if (reqDto.getAutor() == null || reqDto.getAutor().trim().isEmpty()) {
             throw new RuntimeException("Ime autora komentara je obavezno!");
         }
         if (reqDto.getTekst() == null || reqDto.getTekst().trim().isEmpty()) {
             throw new RuntimeException("Tekst komentara ne može biti prazan!");
         }
-
-        // 2. Provera da li vest uopšte postoji u bazi pre upisa komentara
         if (vestRepository.findById(reqDto.getVestId()) == null) {
             throw new RuntimeException("Nemoguće dodati komentar. Vest sa ID-jem " + reqDto.getVestId() + " ne postoji!");
         }
-
-        // 3. Ako je sve u redu, pravimo model i šaljemo repozitorijumu
         Komentar k = new Komentar(0, reqDto.getAutor(), reqDto.getTekst(), null, 0, 0, reqDto.getVestId());
         komentarRepository.create(k);
     }
