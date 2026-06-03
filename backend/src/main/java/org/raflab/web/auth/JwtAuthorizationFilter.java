@@ -14,17 +14,14 @@ public class JwtAuthorizationFilter {
         String path = req.pathInfo();
         String method = req.requestMethod();
 
-        // 1. JAVNE RUTE (Samo ispravljeni endpointi sa /api)
         if (path.equals("/api/login") || method.equals("OPTIONS") || path.equals("/api/test") || path.equals("/api/hello")) {
             return;
         }
 
-        // Dopuna u JwtAuthorizationFilter.java unutar handleAuth filtera:
         if (method.equals("POST") && (path.endsWith("/like") || path.endsWith("/dislike"))) {
-            return; // Propuštaj klikove na lajk i dislajk bez provere tokena
+            return;
         }
 
-        // Javne GET rute
         if (method.equals("GET") && (
                 path.startsWith("/api/vesti") ||
                         path.startsWith("/api/kategorije") ||
@@ -33,12 +30,10 @@ public class JwtAuthorizationFilter {
             return;
         }
 
-        // Javno slanje komentara
         if (method.equals("POST") && path.equals("/api/komentari")) {
             return;
         }
 
-        // 2. PROVERA TOKENA
         String authHeader = req.headers("Authorization");
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
             halt(401, "{\"error\": \"Pristup odbijen. Token nedostaje ili je neispravan.\"}");
@@ -47,7 +42,6 @@ public class JwtAuthorizationFilter {
         String token = authHeader.substring(7);
 
         try {
-            // OVDE JE BILA GREŠKA - sad je ispravljeno
             Algorithm algorithm = Algorithm.HMAC256(AuthService.SECRET_KEY);
             DecodedJWT jwt = JWT.require(algorithm).build().verify(token);
 
@@ -58,7 +52,6 @@ public class JwtAuthorizationFilter {
                 halt(403, "{\"error\": \"Vaš nalog je deaktiviran.\"}");
             }
 
-            // 3. PRAVILA (Usklađeno sa /api/korisnici)
             if (path.startsWith("/api/korisnici") && !"ADMINISTRATOR".equals(tip)) {
                 halt(403, "{\"error\": \"Samo Administrator može upravljati korisnicima.\"}");
             }

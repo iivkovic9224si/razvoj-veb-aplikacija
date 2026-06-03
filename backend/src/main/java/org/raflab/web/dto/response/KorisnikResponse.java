@@ -14,5 +14,5 @@ public class KorisnikResponse {
     private String prezime;
     private String tip;
     private String status;
-    private String jwt; // Token koji kolega dodaje
+    private String jwt;
 }

@@ -13,7 +13,7 @@ public class Komentar {
     private String autor;
     private String tekst;
     private Date vremeKreiranja;
-    private int brojLajkova;     // Dodato prema SQL-u
-    private int brojDislajkova;  // Dodato prema SQL-u
+    private int brojLajkova;
+    private int brojDislajkova;
     private int vestId;
 }

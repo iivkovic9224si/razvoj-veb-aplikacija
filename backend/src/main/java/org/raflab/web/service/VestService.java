@@ -15,7 +15,6 @@ public class VestService {
     private final VestRepository vestRepository = new VestRepository();
     private final TagRepository tagRepository = new TagRepository();
 
-    // UNIVERZALNA RUTA ZA LISTANJE, PRETRAGU I FILTERE (Zadržan i spojen kod iz backend-smallStuffFixing)
     public PagedResponse<VestResponse> getFiltered(Integer katId, String tag, String search, int page) {
         int limit = 10;
         int offset = (Math.max(1, page) - 1) * limit;
@@ -30,47 +29,40 @@ public class VestService {
         return new PagedResponse<>(podaci, totalPages);
     }
 
-    // NAJČITANIJE VESTI - Prilagođeno paginaciji iz kontrolera i zahtevu od 30 dana
     public PagedResponse<VestResponse> getMostRead(int page) {
         int limit = 10;
         int offset = (Math.max(1, page) - 1) * limit;
 
-        // 1. Povlačimo paginiranu listu najčitanijih vesti iz baze (koristi mapResultSetToVest interno)
         List<Vest> entitetiIzBaze = vestRepository.findMostReadPaginated(offset, limit);
 
-        // 2. Mapiramo bazične modele u VestResponse (gde se pune imena autora i kategorije)
         List<VestResponse> podaci = entitetiIzBaze.stream()
                 .map(this::mapToResponse)
                 .collect(Collectors.toList());
 
-        // 3. Brojimo ukupan broj zapisa pomoću nove metode iz repozitorijuma radi tačne paginacije
         int total = vestRepository.countMostReadLast30Days();
         int totalPages = (int) Math.ceil((double) total / limit);
 
         return new PagedResponse<>(podaci, totalPages);
     }
 
-    // POJEDINAČNA VEST - Izmenjena tako da prihvata odluku iz kontrolera/sesije da li treba uvećati brojač
     public VestResponse getByIdWithVisitLogic(int id, boolean vecPosetio) {
         if (id <= 0) throw new RuntimeException("ID vesti nije validan!");
         Vest v = vestRepository.findById(id);
         if (v == null) return null;
-        
-        // Broj poseta se uvećava samo ako korisnik u ovoj sesiji već nije otvorio tu vest
+
         if (!vecPosetio) {
             vestRepository.incrementVisitCount(id);
-            v.setBrojPoseta(v.getBrojPoseta() + 1); // Ažuriramo objekat u memoriji da odmah vrati tačan broj
+            v.setBrojPoseta(v.getBrojPoseta() + 1);
         }
         return mapToResponse(v);
     }
 
-    // Zadržana metoda getById radi kompatibilnosti ako se poziva na drugim mestima na bekendu
     public VestResponse getById(int id) {
         return getByIdWithVisitLogic(id, true);
     }
 
     public void create(VestRequest req, int autorId) {
-        validate(req); // Iskorišćena kolegina privatna metoda za validaciju
+        validate(req);
         if (autorId <= 0) throw new RuntimeException("Autor vesti nije prepoznat!");
 
         Vest v = new Vest(0, req.getNaslov(), req.getTekst(), null, 0, 0, 0, autorId, req.getKategorijaId());
@@ -147,7 +139,6 @@ public class VestService {
         if (req.getKategorijaId() <= 0) throw new RuntimeException("Kategorija je obavezna!");
     }
 
-    // ISPRAVLJENO MAPIRANJE: Sada popunjava tekstualna imena koja se traže na platformi
     private VestResponse mapToResponse(Vest v) {
         VestResponse res = new VestResponse();
         res.setId(v.getId());
@@ -158,7 +149,6 @@ public class VestService {
         res.setBrojLajkova(v.getBrojLajkova());
         res.setBrojDislajkova(v.getBrojDislajkova());
 
-        // Pozivanje metoda iz repozitorijuma kako bi se izbegao null na frontendu
         res.setKategorijaIme(vestRepository.getKategorijaIme(v.getKategorijaId()));
         res.setAutorIme(vestRepository.getAutorImePrezime(v.getAutorId()));
 

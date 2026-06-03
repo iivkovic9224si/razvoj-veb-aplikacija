@@ -10,8 +10,7 @@ public class VestController {
     private final Gson gson = new Gson();
 
     public void registerRoutes() {
-        
-        // 1. UNIVERZALNA RUTA ZA LISTANJE, PRETRAGU I FILTERE (Prihvaćen backend-smallStuffFixing)
+
         get("/api/vesti", (req, res) -> {
             Integer katId = req.queryParams("kategorija") != null ? Integer.parseInt(req.queryParams("kategorija")) : null;
             String tag = req.queryParams("tag");
@@ -21,7 +20,6 @@ public class VestController {
             return gson.toJson(vestService.getFiltered(katId, tag, search, page));
         });
 
-        // 2. RUTA ZA NAJČITANIJE VESTI (Zajednička ruta)
         get("/api/vesti/najcitanije", (req, res) -> {
             int page = req.queryParams("page") != null ? Integer.parseInt(req.queryParams("page")) : 1;
             return gson.toJson(vestService.getMostRead(page));
@@ -40,11 +38,9 @@ public class VestController {
             return gson.toJson(vestService.getRelatedByTags(id));
         });
 
-        // 3. POJEDINAČNA VEST SA EVIDENCIJOM POSETA PREKO SESIJE
         get("/api/vesti/:id", (req, res) -> {
             int id = Integer.parseInt(req.params(":id"));
-            
-            // Logika sesije koja sprečava uvećavanje pregleda pri osvežavanju (zahtev iz specifikacije)
+
             var session = req.session(true);
             String sessionKey = "viewed_vest_" + id;
             boolean vecPosetio = session.attribute(sessionKey) != null;
@@ -64,8 +60,7 @@ public class VestController {
         // ==========================================
         // CMS RUTE (ZAHTEVAJU JWT TOKEN - AUTORIZACIJA)
         // ==========================================
-        
-        // KREIRANJE VESTI (Ispravno uzima trenutniKorisnikId iz tokena)
+
         post("/api/vesti", (req, res) -> {
             VestRequest vr = gson.fromJson(req.body(), VestRequest.class);
             int autorId = req.attribute("trenutniKorisnikId");
@@ -74,7 +69,6 @@ public class VestController {
             return gson.toJson("Vest uspesno kreirana");
         });
 
-        // IZMENA VESTI
         put("/api/vesti/:id", (req, res) -> {
             VestRequest vr = gson.fromJson(req.body(), VestRequest.class);
             int id = Integer.parseInt(req.params(":id"));
@@ -82,7 +76,6 @@ public class VestController {
             return gson.toJson("Vest uspesno izmenjena");
         });
 
-        // BRISANJE VESTI
         delete("/api/vesti/:id", (req, res) -> {
             int id = Integer.parseInt(req.params(":id"));
             vestService.delete(id);

@@ -9,7 +9,6 @@ public class TagController {
     private final Gson gson = new Gson();
 
     public void registerRoutes() {
-        // Vraća listu svih tagova za "Tag Cloud" na dnu stranice ili u sidebaru
         get("/api/tagovi", (req, res) -> {
             int page = req.queryParams("page") != null ? Integer.parseInt(req.queryParams("page")) : 1;
             return gson.toJson(tagService.getAll(page));
