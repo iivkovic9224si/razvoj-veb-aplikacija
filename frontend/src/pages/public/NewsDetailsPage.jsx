@@ -136,8 +136,6 @@ export default function NewsDetailsPage() {
         try {
             await api.post(`/komentari/${commentId}/like`);
             await loadKomentari(commentsPage);
-
-            window.dispatchEvent(new Event("reactionsChanged"));
         } catch (error) {
             alert(error.response?.data?.error || error.response?.data || "Greška pri lajkovanju komentara.");
         }
@@ -147,8 +145,6 @@ export default function NewsDetailsPage() {
         try {
             await api.post(`/komentari/${commentId}/dislike`);
             await loadKomentari(commentsPage);
-
-            window.dispatchEvent(new Event("reactionsChanged"));
         } catch (error) {
             alert(error.response?.data?.error || error.response?.data || "Greška pri dislajkovanju komentara.");
         }
